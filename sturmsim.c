@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
+#include <stdbool.h>
 
 #include "sturmsim.h"
 
@@ -76,6 +78,7 @@ void load_program(char *file_name)
 
 	if (low != EOF && high != EOF) {
 		address = (high * 256) + low;
+		cpu.pc = address;
 		while (( ch = fgetc(program)) != EOF) {
 			if (address >= MEM_SIZE) {
 				fclose(program);
@@ -91,6 +94,50 @@ void load_program(char *file_name)
 
 }
 
+u8 fetch_byte(void)
+{
+	return mem[cpu.pc++];
+}
+
+u8 peek_byte(void)
+{
+	return mem[cpu.pc];
+}
+
+u16 fetch_word(void)
+{
+	return (mem[cpu.pc++] + 256 * mem[cpu.pc++]);
+}
+
+u16 peek_word(void)
+{
+	return (mem[cpu.pc] + 256 * mem[cpu.pc+1]);
+}
+
+void execute(void)
+{
+	u8 instruction, byte;
+	u16 word;
+
+	instruction = fetch_byte();
+	switch (instruction) {
+	case 0xa0: /* LDY # */
+		cpu.y = fetch_byte();
+		break;
+	case 0xa2: /* LDX # */
+		cpu.x = fetch_byte();
+		break;
+	case 0xa9: /* LDA # */
+		cpu.a = fetch_byte();
+		break;
+	default:
+		printf("Not implemented instruction\n");
+		break;
+		// assert(false && "Not implemented instruction");
+	}
+	
+}
+
 int main(int argc, char *argv[])
 {
 	parse_parameters(argc, argv);
@@ -98,7 +145,12 @@ int main(int argc, char *argv[])
 	init_memory();
 	load_program(ctx.program_file_name);
 	clean_up();
-	unsigned int address = 0x100;
-	printf("%04x %02x%02x%02x%02x\n", address, mem[address], mem[address+1], mem[address+2], mem[address+3]);
+	// unsigned int address = 0x100;
+	// printf("%04x %02x%02x%02x%02x\n", address, mem[address], mem[address+1], mem[address+2], mem[address+3]);
+	execute();
+	execute();
+	execute();
+	execute();
+	printf("PC: %04x ACC: %02x X: %02x Y: %02x\n", cpu.pc, cpu.a, cpu.x, cpu.y);
 	return 0;
 }
