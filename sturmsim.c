@@ -8,7 +8,6 @@
 
 #define MEM_SIZE 65536
 
-CPU cpu;
 CTX ctx;
 u8 mem[MEM_SIZE];
 
@@ -43,15 +42,15 @@ void parse_parameters(int argc, char *argv[])
 	ctx.program_file_name = strdup(argv[1]);
 }
 
-void init_cpu(void)
+void init_cpu(CPU_CTX *cpu)
 {
-	cpu.a = 0;
-	cpu.x = 0;
-	cpu.y = 0;
-	cpu.sp = 0xff;
-	cpu.st = one_flag;
-	cpu.pc = 0x0;
-	cpu.halt = false;
+	cpu->a = 0;
+	cpu->x = 0;
+	cpu->y = 0;
+	cpu->sp = 0xff;
+	cpu->st = one_flag;
+	cpu->pc = 0x0;
+	cpu->halt = false;
 }
 
 void init_memory(void)
@@ -64,10 +63,11 @@ void init_memory(void)
 	}	
 }
 
-void load_program(char *file_name)
+u16 load_program(char *file_name)
 {
 	char low, high, ch;
 	u32 address;
+	u16 start_address;
 
 	FILE *program = fopen(file_name, "rb");
 	if (program == NULL) {
@@ -79,7 +79,7 @@ void load_program(char *file_name)
 
 	if (low != EOF && high != EOF) {
 		address = (high * 256) + low;
-		cpu.pc = address;
+		start_address = address;
 		while (( ch = fgetc(program)) != EOF) {
 			if (address >= MEM_SIZE) {
 				fclose(program);
@@ -92,107 +92,111 @@ void load_program(char *file_name)
 		exit_with_msg("Cannot read start address.");
 	}
 	fclose(program);
+	return start_address;
 
 }
 
-u8 fetch_byte(void)
+u8 fetch_byte(CPU_CTX *cpu)
 {
-	return mem[cpu.pc++];
+	return mem[cpu->pc++];
 }
 
-u8 peek_byte(void)
+u8 peek_byte(CPU_CTX *cpu)
 {
-	return mem[cpu.pc];
+	return mem[cpu->pc];
 }
 
-u16 fetch_word(void)
+u16 fetch_word(CPU_CTX *cpu)
 {
-	return (mem[cpu.pc++] + 256 * mem[cpu.pc++]);
+	return (mem[cpu->pc++] + 256 * mem[cpu->pc++]);
 }
 
-u16 peek_word(void)
+u16 peek_word(CPU_CTX *cpu)
 {
-	return (mem[cpu.pc] + 256 * mem[cpu.pc+1]);
+	return (mem[cpu->pc] + 256 * mem[cpu->pc+1]);
 }
 
-void push_byte(u8 i)
+void push_byte(CPU_CTX *cpu, u8 i)
 {
-	mem[0x100 + cpu.sp] = i;
-	cpu.sp--;
+	mem[0x100 + cpu->sp] = i;
+	cpu->sp--;
 }
 
-void push_word(u16 i)
+void push_word(CPU_CTX *cpu, u16 i)
 {
-	mem[0x100 + cpu.sp] = ((i >> 8) & 0xff);
-	cpu.sp--;
-	mem[0x100 + cpu.sp] = (i & 0xff);
-	cpu.sp--;
+	mem[0x100 + cpu->sp] = ((i >> 8) & 0xff);
+	cpu->sp--;
+	mem[0x100 + cpu->sp] = (i & 0xff);
+	cpu->sp--;
 }
 
-u8 pull_byte(void)
+u8 pull_byte(CPU_CTX *cpu)
 {
-	cpu.sp++;
-	return mem[0x100 + cpu.sp];
+	cpu->sp++;
+	return mem[0x100 + cpu->sp];
 }
 
-u16 pull_word(void)
+u16 pull_word(CPU_CTX *cpu)
 {
 	u16 value;
-	cpu.sp++;
-	value = mem[0x100 + cpu.sp];
-	cpu.sp++;
-	value = value + (0x100 * mem[0x100 + cpu.sp]);
+	cpu->sp++;
+	value = mem[0x100 + cpu->sp];
+	cpu->sp++;
+	value = value + (0x100 * mem[0x100 + cpu->sp]);
 	return value;	
 }
 
-void execute_instruction(void)
+void execute_instruction(CPU_CTX *cpu)
 {
 	u8 instruction, byte;
 	u16 address;
 
-	instruction = fetch_byte();
+	instruction = fetch_byte(cpu);
 	switch (instruction) {
 	case 0x20: /* JSR abs */
-		push_word(cpu.pc + 1);
-		cpu.pc = fetch_word();
+		push_word(cpu, cpu->pc + 1);
+		cpu->pc = fetch_word(cpu);
 		break;
 	case 0x60: /* RTS */
-		cpu.pc = pull_word() + 1;
+		cpu->pc = pull_word(cpu) + 1;
 		break;
 	case 0xa0: /* LDY # */
-		cpu.y = fetch_byte();
+		cpu->y = fetch_byte(cpu);
 		break;
 	case 0xa2: /* LDX # */
-		cpu.x = fetch_byte();
+		cpu->x = fetch_byte(cpu);
 		break;
 	case 0xa9: /* LDA # */
-		cpu.a = fetch_byte();
+		cpu->a = fetch_byte(cpu);
 		break;
 	default:
 		printf("Not implemented instruction\n");
-		cpu.halt = true;
+		cpu->halt = true;
 		break;
 	}
 	
 }
 
-void execute_program(void)
+void execute_program(CPU_CTX *cpu)
 {
-	while (!cpu.halt) {
-		execute_instruction();
+	while (!cpu->halt) {
+		execute_instruction(cpu);
 	}
 }
 
 int main(int argc, char *argv[])
 {
+	u16 load_address;
 	parse_parameters(argc, argv);
-	init_cpu();
+	CPU_CTX cpu;
+	init_cpu(&cpu);
 	init_memory();
-	load_program(ctx.program_file_name);
+	load_address = load_program(ctx.program_file_name);
+	cpu.pc = load_address;
 	clean_up();
 	// unsigned int address = 0x100;
 	// printf("%04x %02x%02x%02x%02x\n", address, mem[address], mem[address+1], mem[address+2], mem[address+3]);
-	execute_program();
+	execute_program(&cpu);
 	printf("PC: %04x SP: %04x ACC: %02x X: %02x Y: %02x\n", cpu.pc, (0x100 + cpu.sp), cpu.a, cpu.x, cpu.y);
 	printf("%02x%02x%02x%02x\n", mem[0x1fc], mem[0x1fd], mem[0x1fe], mem[0x1ff]);
 	return 0;

@@ -14,7 +14,7 @@ typedef struct {
 	u8 st;
 	u16 pc;
 	bool halt;
-} CPU;
+} CPU_CTX;
 
 /************************************************
  * status register flags
