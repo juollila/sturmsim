@@ -5,28 +5,7 @@
 
 u8 mem[MEM_SIZE];
 
-/************************************************
- * status register flags
- * 76543210
- * NV1BDIZC
- * C = carry
- * Z = zero
- * I = interrupt disable
- * D = decimal
- * B = break
- * 1 = always 1
- * V = overflow
- * N = negative
- ************************************************/
 
-const u8 carry_flag = 0x1;
-const u8 zero_flag = 0x2;
-const u8 interrupt_flag = 0x4;
-const u8 decimal_flag = 0x8;
-const u8 break_flag = 0x10;
-const u8 one_flag = 0x20;
-const u8 overflow_flag = 0x40;
-const u8 negative_flag = 0x80;
 
 void init_cpu(CPU_CTX *cpu)
 {
@@ -107,7 +86,7 @@ static void chrout(u8 i)
 	putchar(i);
 }
 
-static void set_nz_flags(CPU_CTX *cpu, u8 i)
+void set_nz_flags(CPU_CTX *cpu, u8 i)
 {
 	if (i == 0) cpu->sr |= zero_flag; else cpu->sr &= (~zero_flag);
 	if (i >= 0x80) cpu->sr |= negative_flag; else cpu->sr &= (~negative_flag);
