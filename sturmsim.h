@@ -10,9 +10,10 @@ typedef struct {
 	u8 a;
 	u8 x;
 	u8 y;
-	u16 sp;
+	u8 sp;
 	u8 st;
 	u16 pc;
+	bool halt;
 } CPU;
 
 /************************************************

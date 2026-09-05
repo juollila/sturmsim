@@ -48,9 +48,10 @@ void init_cpu(void)
 	cpu.a = 0;
 	cpu.x = 0;
 	cpu.y = 0;
-	cpu.sp = 0x1ff;
+	cpu.sp = 0xff;
 	cpu.st = one_flag;
-	cpu.pc = 0xfffc;
+	cpu.pc = 0x0;
+	cpu.halt = false;
 }
 
 void init_memory(void)
@@ -114,13 +115,50 @@ u16 peek_word(void)
 	return (mem[cpu.pc] + 256 * mem[cpu.pc+1]);
 }
 
-void execute(void)
+void push_byte(u8 i)
+{
+	mem[0x100 + cpu.sp] = i;
+	cpu.sp--;
+}
+
+void push_word(u16 i)
+{
+	mem[0x100 + cpu.sp] = ((i >> 8) & 0xff);
+	cpu.sp--;
+	mem[0x100 + cpu.sp] = (i & 0xff);
+	cpu.sp--;
+}
+
+u8 pull_byte(void)
+{
+	cpu.sp++;
+	return mem[0x100 + cpu.sp];
+}
+
+u16 pull_word(void)
+{
+	u16 value;
+	cpu.sp++;
+	value = mem[0x100 + cpu.sp];
+	cpu.sp++;
+	value = value + (0x100 * mem[0x100 + cpu.sp]);
+	return value;	
+}
+
+void execute_instruction(void)
 {
 	u8 instruction, byte;
-	u16 word;
+	u16 address;
 
 	instruction = fetch_byte();
 	switch (instruction) {
+	case 0x20: /* JSR abs */
+		push_word(cpu.pc + 1);
+		cpu.pc = fetch_word();
+		break;
+	case 0x60: /* RTS */
+		cpu.pc = pull_word() + 1;
+		break;
 	case 0xa0: /* LDY # */
 		cpu.y = fetch_byte();
 		break;
@@ -132,10 +170,17 @@ void execute(void)
 		break;
 	default:
 		printf("Not implemented instruction\n");
+		cpu.halt = true;
 		break;
-		// assert(false && "Not implemented instruction");
 	}
 	
+}
+
+void execute_program(void)
+{
+	while (!cpu.halt) {
+		execute_instruction();
+	}
 }
 
 int main(int argc, char *argv[])
@@ -147,10 +192,8 @@ int main(int argc, char *argv[])
 	clean_up();
 	// unsigned int address = 0x100;
 	// printf("%04x %02x%02x%02x%02x\n", address, mem[address], mem[address+1], mem[address+2], mem[address+3]);
-	execute();
-	execute();
-	execute();
-	execute();
-	printf("PC: %04x ACC: %02x X: %02x Y: %02x\n", cpu.pc, cpu.a, cpu.x, cpu.y);
+	execute_program();
+	printf("PC: %04x SP: %04x ACC: %02x X: %02x Y: %02x\n", cpu.pc, (0x100 + cpu.sp), cpu.a, cpu.x, cpu.y);
+	printf("%02x%02x%02x%02x\n", mem[0x1fc], mem[0x1fd], mem[0x1fe], mem[0x1ff]);
 	return 0;
 }
