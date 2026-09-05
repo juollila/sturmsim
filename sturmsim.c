@@ -11,12 +11,12 @@
 CTX ctx;
 u8 mem[MEM_SIZE];
 
-void clean_up(void)
+static void clean_up(void)
 {
 	if (ctx.program_file_name) free(ctx.program_file_name);
 }
 
-void exit_with_usage_msg(char *msg)
+static void exit_with_usage_msg(char *msg)
 {
 	fprintf(stderr, "%s\n", msg);
 	fprintf(stderr, "usage: sturmsim <file>\n");
@@ -24,7 +24,7 @@ void exit_with_usage_msg(char *msg)
 	exit(1);
 }
 
-void exit_with_msg(char *msg)
+static void exit_with_msg(char *msg)
 {
 	fprintf(stderr, "%s\n", msg);
 	clean_up();
@@ -32,7 +32,7 @@ void exit_with_msg(char *msg)
 }
 
 
-void parse_parameters(int argc, char *argv[])
+static void parse_parameters(int argc, char *argv[])
 {
 	ctx.program_file_name = NULL;
 
@@ -44,11 +44,11 @@ void parse_parameters(int argc, char *argv[])
 
 void init_cpu(CPU_CTX *cpu)
 {
-	cpu->a = 0;
-	cpu->x = 0;
-	cpu->y = 0;
+	cpu->ac = 0;
+	cpu->xr = 0;
+	cpu->yr = 0;
 	cpu->sp = 0xff;
-	cpu->st = one_flag;
+	cpu->sr = one_flag;
 	cpu->pc = 0x0;
 	cpu->halt = false;
 }
@@ -98,33 +98,33 @@ u16 load_program(char *file_name)
 
 }
 
-u8 fetch_byte(CPU_CTX *cpu)
+static u8 fetch_byte(CPU_CTX *cpu)
 {
 	return mem[cpu->pc++];
 }
 
-u8 peek_byte(CPU_CTX *cpu)
+static u8 peek_byte(CPU_CTX *cpu)
 {
 	return mem[cpu->pc];
 }
 
-u16 fetch_word(CPU_CTX *cpu)
+static u16 fetch_word(CPU_CTX *cpu)
 {
 	return (mem[cpu->pc++] + 256 * mem[cpu->pc++]);
 }
 
-u16 peek_word(CPU_CTX *cpu)
+static u16 peek_word(CPU_CTX *cpu)
 {
 	return (mem[cpu->pc] + 256 * mem[cpu->pc+1]);
 }
 
-void push_byte(CPU_CTX *cpu, u8 i)
+static void push_byte(CPU_CTX *cpu, u8 i)
 {
 	mem[0x100 + cpu->sp] = i;
 	cpu->sp--;
 }
 
-void push_word(CPU_CTX *cpu, u16 i)
+static void push_word(CPU_CTX *cpu, u16 i)
 {
 	mem[0x100 + cpu->sp] = ((i >> 8) & 0xff);
 	cpu->sp--;
@@ -132,13 +132,13 @@ void push_word(CPU_CTX *cpu, u16 i)
 	cpu->sp--;
 }
 
-u8 pull_byte(CPU_CTX *cpu)
+static u8 pull_byte(CPU_CTX *cpu)
 {
 	cpu->sp++;
 	return mem[0x100 + cpu->sp];
 }
 
-u16 pull_word(CPU_CTX *cpu)
+static u16 pull_word(CPU_CTX *cpu)
 {
 	u16 value;
 	cpu->sp++;
@@ -149,17 +149,23 @@ u16 pull_word(CPU_CTX *cpu)
 	return value;	
 }
 
-void chrout(u8 i)
+static void chrout(u8 i)
 {
 	if (i == 0xd) i = '\n';
 	if (i >= 0x60) i = '.'; 
 	putchar(i);
 }
 
-void set_nz_flags(CPU_CTX *cpu, u8 i)
+static void set_nz_flags(CPU_CTX *cpu, u8 i)
 {
-	if (i == 0) cpu->st |= zero_flag; else cpu->st &= (~zero_flag);
-	if (i >= 0x80) cpu->st |= negative_flag; else cpu->st &= (~negative_flag);
+	if (i == 0) cpu->sr |= zero_flag; else cpu->sr &= (~zero_flag);
+	if (i >= 0x80) cpu->sr |= negative_flag; else cpu->sr &= (~negative_flag);
+}
+
+static void print_registers(CPU_CTX *cpu)
+{
+	printf("   PC   SR AC XR YR SP\n");
+	printf("; %04x %02x %02x %02x %02x %02x\n", cpu->pc, cpu->sr, cpu->ac, cpu->xr, cpu->yr, cpu->sp);
 }
 
 void execute_instruction(CPU_CTX *cpu)
@@ -169,7 +175,7 @@ void execute_instruction(CPU_CTX *cpu)
 	u16 address;
 
 	if (cpu->pc == 0xffd2) {
-		chrout(cpu->a);
+		chrout(cpu->ac);
 		instruction = 0x60; /* RTS */
 	} else {
 		instruction = fetch_byte(cpu);
@@ -192,41 +198,35 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0xa0: /* LDY # */
 		// printf("ldy\n");
-		cpu->y = fetch_byte(cpu);
-		set_nz_flags(cpu, cpu->y);
+		cpu->yr = fetch_byte(cpu);
+		set_nz_flags(cpu, cpu->yr);
 		break;
 	case 0xa2: /* LDX # */
 		// printf("ldx\n");
-		cpu->x = fetch_byte(cpu);
-		set_nz_flags(cpu, cpu->x);
+		cpu->xr = fetch_byte(cpu);
+		set_nz_flags(cpu, cpu->xr);
 		break;
 	case 0xa9: /* LDA # */
 		// printf("lda\n");
-		cpu->a = fetch_byte(cpu);
-		set_nz_flags(cpu, cpu->a);
+		cpu->ac = fetch_byte(cpu);
+		set_nz_flags(cpu, cpu->ac);
 		break;
 	case 0xbd: /* LDA abs,X */
 		// printf("lda abs,x\n");
-		cpu->a = mem[fetch_word(cpu) + cpu->x];
-		set_nz_flags(cpu, cpu->a);
-		// printf("PC: %04x ST: %02x SP: %04x ACC: %02x X: %02x Y: %02x\n", cpu->pc, cpu->st, (0x100 + cpu->sp), cpu->a, cpu->x, cpu->y);
+		cpu->ac = mem[fetch_word(cpu) + cpu->xr];
+		set_nz_flags(cpu, cpu->ac);
 		break;
 	case 0xd0: /* BNE */
 		offset = (i8) fetch_byte(cpu);
-		if ((cpu->st & zero_flag) != zero_flag) cpu->pc = cpu->pc + offset;
-		// printf("bne cpu->st: %02x cpu->pc: %04x\n", cpu->st, cpu->pc);
-		// printf("PC: %04x ST: %02x SP: %04x ACC: %02x X: %02x Y: %02x\n", cpu->pc, cpu->st, (0x100 + cpu->sp), cpu->a, cpu->x, cpu->y);
+		if ((cpu->sr & zero_flag) != zero_flag) cpu->pc = cpu->pc + offset;
 		break;
 	case 0xe8: /* INX */
-		cpu->x = cpu->x + 1;
-		set_nz_flags(cpu, cpu->x);
+		cpu->xr = cpu->xr + 1;
+		set_nz_flags(cpu, cpu->xr);
 		break;
 	case 0xf0: /* BEQ */
 		offset = (i8) fetch_byte(cpu);
-		if ((cpu->st & zero_flag) == zero_flag) cpu->pc = cpu->pc + offset;
-		// printf("beq cpu->st: %02x cpu->pc: %04x\n", cpu->st, cpu->pc);
-		// printf("PC: %04x ST: %02x SP: %04x ACC: %02x X: %02x Y: %02x\n", cpu->pc, cpu->st, (0x100 + cpu->sp), cpu->a, cpu->x, cpu->y);
-		// cpu->halt = true;
+		if ((cpu->sr & zero_flag) == zero_flag) cpu->pc = cpu->pc + offset;
 		break;
 	default:
 		printf("Not implemented instruction\n");
@@ -254,9 +254,5 @@ int main(int argc, char *argv[])
 	cpu.pc = load_address;
 	clean_up();
 	execute_program(&cpu);
-	// printf("PC: %04x SP: %04x ACC: %02x X: %02x Y: %02x\n", cpu.pc, (0x100 + cpu.sp), cpu.a, cpu.x, cpu.y);
-	// printf("stack: %02x%02x%02x%02x\n", mem[0x1fc], mem[0x1fd], mem[0x1fe], mem[0x1ff]);
-	// printf("$0100: %02x%02x%02x%02x %02x%02x%02x%02x\n", mem[0x100], mem[0x101], mem[0x102], mem[0x103], mem[0x104], mem[0x105], mem[0x106], mem[0x107]);
-	// printf("$0108: %02x%02x%02x%02x %02x%02x%02x%02x\n", mem[0x108], mem[0x109], mem[0x10a], mem[0x10b], mem[0x10c], mem[0x10d], mem[0x10e], mem[0x10f]);
 	return 0;
 }

@@ -9,12 +9,12 @@ typedef struct {
 } CTX;
 
 typedef struct {
-	u8 a;
-	u8 x;
-	u8 y;
-	u8 sp;
-	u8 st;
 	u16 pc;
+	u8 sr;
+	u8 ac;
+	u8 xr;
+	u8 yr;
+	u8 sp;
 	bool halt;
 } CPU_CTX;
 
