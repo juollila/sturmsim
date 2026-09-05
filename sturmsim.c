@@ -156,6 +156,12 @@ void chrout(u8 i)
 	putchar(i);
 }
 
+void set_nz_flags(CPU_CTX *cpu, u8 i)
+{
+	if (i == 0) cpu->st |= zero_flag; else cpu->st &= (~zero_flag);
+	if (i >= 0x80) cpu->st |= negative_flag; else cpu->st &= (~negative_flag);
+}
+
 void execute_instruction(CPU_CTX *cpu)
 {
 	u8 instruction;
@@ -187,26 +193,22 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0xa0: /* LDY # */
 		// printf("ldy\n");
 		cpu->y = fetch_byte(cpu);
-		if (cpu->y == 0) cpu->st |= zero_flag; else cpu->st &= (~zero_flag);
-		if (cpu->y >= 0x80) cpu->st |= negative_flag; else cpu->st &= (~negative_flag);
+		set_nz_flags(cpu, cpu->y);
 		break;
 	case 0xa2: /* LDX # */
 		// printf("ldx\n");
 		cpu->x = fetch_byte(cpu);
-		if (cpu->x == 0) cpu->st |= zero_flag; else cpu->st &= (~zero_flag);
-		if (cpu->x >= 0x80) cpu->st |= negative_flag; else cpu->st &= (~negative_flag);
+		set_nz_flags(cpu, cpu->x);
 		break;
 	case 0xa9: /* LDA # */
 		// printf("lda\n");
 		cpu->a = fetch_byte(cpu);
-		if (cpu->a == 0) cpu->st |= zero_flag; else cpu->st &= (~zero_flag);
-		if (cpu->a >= 0x80) cpu->st |= negative_flag; else cpu->st &= (~negative_flag);
+		set_nz_flags(cpu, cpu->a);
 		break;
 	case 0xbd: /* LDA abs,X */
 		// printf("lda abs,x\n");
 		cpu->a = mem[fetch_word(cpu) + cpu->x];
-		if (cpu->a == 0) cpu->st |= zero_flag; else cpu->st &= (~zero_flag);
-		if (cpu->a >= 0x80) cpu->st |= negative_flag; else cpu->st &= (~negative_flag);
+		set_nz_flags(cpu, cpu->a);
 		// printf("PC: %04x ST: %02x SP: %04x ACC: %02x X: %02x Y: %02x\n", cpu->pc, cpu->st, (0x100 + cpu->sp), cpu->a, cpu->x, cpu->y);
 		break;
 	case 0xd0: /* BNE */
@@ -217,6 +219,7 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0xe8: /* INX */
 		cpu->x = cpu->x + 1;
+		set_nz_flags(cpu, cpu->x);
 		break;
 	case 0xf0: /* BEQ */
 		offset = (i8) fetch_byte(cpu);
