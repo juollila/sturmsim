@@ -21,8 +21,26 @@ void test_negative_flag(void)
 	TEST_CHECK((cpu.sr & negative_flag) == 0x0);
 }
 
+void test_bpl(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x10; /* bpl */
+	mem[0x101] = 0x20; /* offset */
+	cpu.pc = 0x100;
+	cpu.sr = negative_flag;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x122);
+	// printf("cpu.pc: %02x\n", cpu.pc);
+}
+
 TEST_LIST = {
 	{"zero flag", test_zero_flag },
 	{"negative flag", test_negative_flag },
+	{"bpl", test_bpl},
 	{ NULL, NULL }
 };

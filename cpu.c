@@ -117,6 +117,10 @@ void execute_instruction(CPU_CTX *cpu)
 		// printf("\n");
 		cpu->halt = true;
 		break;
+	case 0x10: /* BPL rel */
+		offset = (i8) fetch_byte(cpu);
+		if ((cpu->sr & negative_flag) != negative_flag) cpu->pc = cpu->pc + offset;
+		break;
 	case 0x20: /* JSR abs */
 		push_word(cpu, cpu->pc + 1);
 		cpu->pc = fetch_word(cpu);
