@@ -237,6 +237,38 @@ void test_cpy_imm(void)
 	TEST_CHECK((cpu.sr) == carry_flag);
 }
 
+void test_bne(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xd0; /* bne */
+	mem[0x101] = 0x80; /* offset */
+	cpu.pc = 0x100;
+	cpu.sr = zero_flag;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x82);
+}
+
+void test_beq(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xf0; /* beq */
+	mem[0x101] = 0x80; /* offset */
+	cpu.pc = 0x100;
+	cpu.sr = zero_flag;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x82);
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+}
+
 TEST_LIST = {
 	{"zero flag", test_zero_flag },
 	{"negative flag", test_negative_flag },
@@ -251,5 +283,7 @@ TEST_LIST = {
 	{"ldy #", test_ldy_imm},
 	{"bcs", test_bcs},
 	{"cpy #", test_cpy_imm},
+	{"bne", test_bne},
+	{"beq", test_beq},
 	{ NULL, NULL }
 };
