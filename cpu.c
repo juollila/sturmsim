@@ -195,9 +195,21 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->pc = fetch_word(cpu);
 		// printf("jsr %04x\n", cpu->pc);
 		break;
+	case 0x21: /* AND (zp, X) */
+		zp = fetch_byte(cpu);
+		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
+		cpu->ac = cpu->ac & mem[address];
+		set_nz_flags(cpu, cpu->ac);
+		break;
 	case 0x30: /* BMI rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & negative_flag) == negative_flag) cpu->pc = cpu->pc + offset;
+		break;
+	case 0x31: /* AND (zp),y */
+		zp = fetch_byte(cpu);
+		address = mem[zp] + (0x100 * mem[zp + 1]) + cpu->yr;
+		cpu->ac = cpu->ac & mem[address];
+		set_nz_flags(cpu, cpu->ac);
 		break;
 	case 0x40: /* RTI */
 		cpu->sr = pull_byte(cpu);

@@ -170,6 +170,26 @@ void test_jsr(void)
 	TEST_CHECK(cpu.sp == 0xfd);
 }
 
+void test_and_zp_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.xr = 0x10;
+	mem[0x100] = 0x21; /* and ($10, x) */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.ac = 0x55;
+	mem[0x20] = 0x00;
+	mem[0x21] = 0x80;
+	mem[0x8000] = 0xf;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.xr == 0x10);
+	TEST_CHECK((cpu.sr) == 0x0);
+	TEST_CHECK((cpu.ac) == 0x05);
+}
+
 void test_bmi(void)
 {
 	CPU_CTX cpu;
@@ -184,6 +204,26 @@ void test_bmi(void)
 	cpu.sr = 0x0;
 	execute_instruction(&cpu);
 	TEST_CHECK(cpu.pc == 0x102);
+}
+
+void test_and_zp_y(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.yr = 0x10;
+	mem[0x100] = 0x31; /* and ($20), y */
+	mem[0x101] = 0x20;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.ac = 0x55;
+	mem[0x20] = 0x00;
+	mem[0x21] = 0x80;
+	mem[0x8010] = 0xf0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.yr == 0x10);
+	TEST_CHECK((cpu.sr) == 0);
+	TEST_CHECK((cpu.ac) == 0x50);
 }
 
 void test_rti(void)
@@ -415,7 +455,9 @@ TEST_LIST = {
 	{"bpl", test_bpl},
 	{"ora (zp), y", test_ora_zp_y},
 	{"jsr", test_jsr},
+	{"and (zp, x)", test_and_zp_x},
 	{"bmi", test_bmi},
+	{"and (zp), y", test_and_zp_y},
 	{"rti", test_rti},
 	{"bvc", test_bvc},
 	{"rts", test_rts},
