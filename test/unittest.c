@@ -53,10 +53,44 @@ void test_jsr(void)
 	TEST_CHECK(cpu.sp == 0xfd);
 }
 
+void test_bmi(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x30; /* bmi */
+	mem[0x101] = 0xfe; /* offset */
+	cpu.pc = 0x100;
+	cpu.sr = negative_flag;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x100);
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+}
+
+void test_bvc(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x50; /* bvc */
+	mem[0x101] = 0xfd; /* offset */
+	cpu.pc = 0x100;
+	cpu.sr = overflow_flag;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0xff);
+}
+
 TEST_LIST = {
 	{"zero flag", test_zero_flag },
 	{"negative flag", test_negative_flag },
 	{"bpl", test_bpl},
 	{"jsr", test_jsr},
+	{"bmi", test_bmi},
+	{"bvc", test_bvc},
 	{ NULL, NULL }
 };

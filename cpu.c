@@ -126,6 +126,17 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->pc = fetch_word(cpu);
 		// printf("jsr %04x\n", cpu->pc);
 		break;
+	case 0x30: /* BMI rel */
+		offset = (i8) fetch_byte(cpu);
+		if ((cpu->sr & negative_flag) == negative_flag) cpu->pc = cpu->pc + offset;
+		break;
+	case 0x40: /* TODO: RTI */
+		cpu->halt = true;
+		break;
+	case 0x50: /* BVC rel */
+		offset = (i8) fetch_byte(cpu);
+		if ((cpu->sr & overflow_flag) != overflow_flag) cpu->pc = cpu->pc + offset;
+		break;
 	case 0x60: /* RTS */
 		// printf("rts\n");
 		cpu->pc = pull_word(cpu) + 1;
