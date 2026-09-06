@@ -1,8 +1,8 @@
 **/*.DS_Store
 **/*.swp
 **/*.swo
+**/unittest
 *.o
 *.lst
 *.prg
 sturmsim
-test/unittest

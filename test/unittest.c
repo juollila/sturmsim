@@ -38,9 +38,25 @@ void test_bpl(void)
 	// printf("cpu.pc: %02x\n", cpu.pc);
 }
 
+void test_jsr(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x20; /* jsr */
+	mem[0x101] = 0x22; /* address */
+	mem[0x102] = 0xfd;
+	cpu.pc = 0x100;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0xfd22);
+	TEST_CHECK(mem[0x1ff] == 0x01);
+	TEST_CHECK(mem[0x1fe] == 0x02);
+	TEST_CHECK(cpu.sp == 0xfd);
+}
+
 TEST_LIST = {
 	{"zero flag", test_zero_flag },
 	{"negative flag", test_negative_flag },
 	{"bpl", test_bpl},
+	{"jsr", test_jsr},
 	{ NULL, NULL }
 };
