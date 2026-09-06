@@ -216,9 +216,21 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->sr &= (~break_flag);
 		cpu->pc = pull_word(cpu);
 		break;
+	case 0x41: /* EOR (zp, X) */
+		zp = fetch_byte(cpu);
+		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
+		cpu->ac = cpu->ac ^ mem[address];
+		set_nz_flags(cpu, cpu->ac);
+		break;
 	case 0x50: /* BVC rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & overflow_flag) != overflow_flag) cpu->pc = cpu->pc + offset;
+		break;
+	case 0x51: /* EOR (zp),y */
+		zp = fetch_byte(cpu);
+		address = mem[zp] + (0x100 * mem[zp + 1]) + cpu->yr;
+		cpu->ac = cpu->ac ^ mem[address];
+		set_nz_flags(cpu, cpu->ac);
 		break;
 	case 0x60: /* RTS */
 		// printf("rts\n");

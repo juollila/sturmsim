@@ -243,6 +243,26 @@ void test_rti(void)
 	TEST_CHECK(cpu.sp == 0xff);
 }
 
+void test_eor_zp_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.xr = 0x10;
+	mem[0x100] = 0x41; /* eor ($10, x) */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.ac = 0x55;
+	mem[0x20] = 0x00;
+	mem[0x21] = 0x80;
+	mem[0x8000] = 0xf;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.xr == 0x10);
+	TEST_CHECK((cpu.sr) == 0x0);
+	TEST_CHECK((cpu.ac) == 0x5a);
+}
+
 void test_bvc(void)
 {
 	CPU_CTX cpu;
@@ -257,6 +277,26 @@ void test_bvc(void)
 	cpu.sr = 0x0;
 	execute_instruction(&cpu);
 	TEST_CHECK(cpu.pc == 0xff);
+}
+
+void test_eor_zp_y(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.yr = 0x10;
+	mem[0x100] = 0x51; /* and ($20), y */
+	mem[0x101] = 0x20;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.ac = 0x55;
+	mem[0x20] = 0x00;
+	mem[0x21] = 0x80;
+	mem[0x8010] = 0xf0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.yr == 0x10);
+	TEST_CHECK((cpu.sr) == negative_flag);
+	TEST_CHECK((cpu.ac) == 0xa5);
 }
 
 void test_rts(void)
@@ -459,7 +499,9 @@ TEST_LIST = {
 	{"bmi", test_bmi},
 	{"and (zp), y", test_and_zp_y},
 	{"rti", test_rti},
+	{"eor (zp, x)", test_eor_zp_x},
 	{"bvc", test_bvc},
+	{"and (zp), y", test_eor_zp_y},
 	{"rts", test_rts},
 	{"bvs", test_bvs},
 	{"bcc", test_bcc},
