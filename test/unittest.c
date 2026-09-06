@@ -85,6 +85,20 @@ void test_bvc(void)
 	TEST_CHECK(cpu.pc == 0xff);
 }
 
+void test_rts(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x60; /* rts */
+	cpu.sp = 0xfd; /* set stack pointer */
+	mem[0x1fe] = 0x21; /* address -1 in stack */
+	mem[0x1ff] = 0xfd;
+	cpu.pc = 0x100;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0xfd22);
+	TEST_CHECK(cpu.sp == 0xff);
+}
+
 TEST_LIST = {
 	{"zero flag", test_zero_flag },
 	{"negative flag", test_negative_flag },
@@ -92,5 +106,6 @@ TEST_LIST = {
 	{"jsr", test_jsr},
 	{"bmi", test_bmi},
 	{"bvc", test_bvc},
+	{"rts", test_rts},
 	{ NULL, NULL }
 };
