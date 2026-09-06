@@ -131,6 +131,36 @@ void test_bcc(void)
 	TEST_CHECK(cpu.pc == 0x150);
 }
 
+void test_ldy_imm(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xa0; /* ldy */
+	mem[0x101] = 0x4e; /* #$4e */
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.yr == 0x4e);
+	TEST_CHECK((cpu.sr) == 0);
+	mem[0x100] = 0xa0; /* ldy */
+	mem[0x101] = 0x00; /* #$0 */
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.yr == 0x0);
+	TEST_CHECK((cpu.sr) == zero_flag);
+	mem[0x100] = 0xa0; /* ldy */
+	mem[0x101] = 0xff; /* #$ff */
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.yr == 0xff);
+	TEST_CHECK((cpu.sr) == negative_flag);
+}
+
 void test_bcs(void)
 {
 	CPU_CTX cpu;
@@ -157,6 +187,7 @@ TEST_LIST = {
 	{"rts", test_rts},
 	{"bvs", test_bvs},
 	{"bcc", test_bcc},
+	{"ldy #", test_ldy_imm},
 	{"bcs", test_bcs},
 	{ NULL, NULL }
 };
