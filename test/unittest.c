@@ -50,6 +50,53 @@ void test_cmp_flag(void)
 	TEST_CHECK((cpu.sr & negative_flag) == 0x0);
 }
 
+void test_brk(void)
+{
+	CPU_CTX cpu;
+	/* default CVINB */
+	init_cpu(&cpu);
+	init_memory();
+	cpu.ac = 0x1;
+	cpu.xr = 0x2;
+	cpu.yr = 0x3;
+	mem[0x110] = 0x0; /* brk */
+	cpu.pc = 0x110;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.halt == true);
+	TEST_CHECK(cpu.pc == 0x111);
+	TEST_CHECK(cpu.sr == break_flag);
+	TEST_CHECK(cpu.sp == 0xf9);
+	TEST_CHECK(mem[0x1ff] == 0x01);
+	TEST_CHECK(mem[0x1fe] == 0x11);
+	TEST_CHECK(mem[0x1fd] == break_flag);
+	TEST_CHECK(mem[0x1fc] == 0x1);
+	TEST_CHECK(mem[0x1fb] == 0x2);
+	TEST_CHECK(mem[0x1fa] == 0x3);
+	/* modified CVINB */
+	init_cpu(&cpu);
+	init_memory();
+	mem[0x316] = 0x00;
+	mem[0x317] = 0x80;
+	cpu.ac = 0x1;
+	cpu.xr = 0x2;
+	cpu.yr = 0x3;
+	mem[0x110] = 0x0; /* brk */
+	cpu.pc = 0x110;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.halt == false);
+	TEST_CHECK(cpu.pc == 0x8000);
+	TEST_CHECK(cpu.sr == break_flag);
+	TEST_CHECK(cpu.sp == 0xf9);
+	TEST_CHECK(mem[0x1ff] == 0x01);
+	TEST_CHECK(mem[0x1fe] == 0x11);
+	TEST_CHECK(mem[0x1fd] == break_flag);
+	TEST_CHECK(mem[0x1fc] == 0x1);
+	TEST_CHECK(mem[0x1fb] == 0x2);
+	TEST_CHECK(mem[0x1fa] == 0x3);
+}
+
 void test_bpl(void)
 {
 	CPU_CTX cpu;
@@ -96,6 +143,23 @@ void test_bmi(void)
 	cpu.sr = 0x0;
 	execute_instruction(&cpu);
 	TEST_CHECK(cpu.pc == 0x102);
+}
+
+void test_rti(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x40; /* rti */
+	cpu.pc = 0x100;
+	cpu.sr = 0;
+	cpu.sp = 0xfc;
+	mem[0x1fd] = (carry_flag | break_flag);
+	mem[0x1fe] = 0x22;
+	mem[0x1ff] = 0xfd;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0xfd22);
+	TEST_CHECK(cpu.sr == carry_flag);
+	TEST_CHECK(cpu.sp == 0xff);
 }
 
 void test_bvc(void)
@@ -305,9 +369,11 @@ TEST_LIST = {
 	{"zero flag", test_zero_flag },
 	{"negative flag", test_negative_flag },
 	{"compare flags", test_cmp_flag },
+	{"brk", test_brk},
 	{"bpl", test_bpl},
 	{"jsr", test_jsr},
 	{"bmi", test_bmi},
+	{"rti", test_rti},
 	{"bvc", test_bvc},
 	{"rts", test_rts},
 	{"bvs", test_bvs},

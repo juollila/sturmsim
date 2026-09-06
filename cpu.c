@@ -25,7 +25,10 @@ void init_memory(void)
 		// mem[i++] = 0x0f;
 		// mem[i++] = 0xf0;
 		// mem[i++] = 0xff;
-	}	
+	}
+	/* Install default BRK vector (CBINV), C64 specific */
+	mem[0x316] = 0x66;
+	mem[0x317] = 0xfe;
 }
 
 static u8 fetch_byte(CPU_CTX *cpu)
@@ -133,10 +136,45 @@ void execute_instruction(CPU_CTX *cpu)
 
 	// printf("pc: %04x instruction: %02x\n", cpu->pc-1, instruction);
 	switch (instruction) {
-	case 0x0: /* TODO: Implement proper break support */
-		// printf("\n");
-		cpu->halt = true;
+	case 0x0: /* BRK */
+		/**
+		 *
+		 * What happens when BRK instruction is executed:
+		 *
+		 * CPU saves PC and SR to stack and jumps to IRQ routine.
+		 * 
+		 * Kernal's IRQ routine saves AC, XR and YR to stack and checks
+		 * B flag in SR. After that it jumps via CBINV or CINV vector
+		 * in RAM. CBINV vector is used if B (break) flag is set in SR.
+		 *
+		 * CBINV = $316-$317, this vector points to $fe66 in ROM
+		 * ROM routine calls RESTOR, IOINIT and CINT Kernal routines
+		 * and jumps to basic warm start.
+		 *
+		 */
+
+		/* set break flag */
+		cpu->sr |= break_flag;
+
+		/* push PC and SR to stack (done by CPU) */
+		push_word(cpu, cpu->pc);
+		push_byte(cpu, cpu->sr);
+
+		/* push AC, XR and YR to stack (done by IRQ routine) */
+		push_byte(cpu, cpu->ac);
+		push_byte(cpu, cpu->xr);
+		push_byte(cpu, cpu->yr);
+
+		address = mem[0x316] + (0x100 * mem[0x317]);
+		/* if default CBINV vector then halt execution else jump via CBINV */
+		if (address == 0xfe66) {
+			printf("break\n\n");
+			cpu->halt = true;
+		} else {
+			cpu->pc = address;
+		}
 		break;
+
 	case 0x10: /* BPL rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & negative_flag) != negative_flag) cpu->pc = cpu->pc + offset;
@@ -150,8 +188,10 @@ void execute_instruction(CPU_CTX *cpu)
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & negative_flag) == negative_flag) cpu->pc = cpu->pc + offset;
 		break;
-	case 0x40: /* TODO: RTI */
-		cpu->halt = true;
+	case 0x40: /* RTI */
+		cpu->sr = pull_byte(cpu);
+		cpu->sr &= (~break_flag);
+		cpu->pc = pull_word(cpu);
 		break;
 	case 0x50: /* BVC rel */
 		offset = (i8) fetch_byte(cpu);
