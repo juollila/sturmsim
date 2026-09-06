@@ -134,6 +134,27 @@ void test_bpl(void)
 	// printf("cpu.pc: %02x\n", cpu.pc);
 }
 
+
+void test_ora_zp_y(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.yr = 0x10;
+	mem[0x100] = 0x11; /* ora ($20), y */
+	mem[0x101] = 0x20;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.ac = 0x55;
+	mem[0x20] = 0x00;
+	mem[0x21] = 0x80;
+	mem[0x8010] = 0xf0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.yr == 0x10);
+	TEST_CHECK((cpu.sr) == negative_flag);
+	TEST_CHECK((cpu.ac) == 0xf5);
+}
+
 void test_jsr(void)
 {
 	CPU_CTX cpu;
@@ -392,6 +413,7 @@ TEST_LIST = {
 	{"brk", test_brk},
 	{"ora (zp, x)", test_ora_zp_x},
 	{"bpl", test_bpl},
+	{"ora (zp), y", test_ora_zp_y},
 	{"jsr", test_jsr},
 	{"bmi", test_bmi},
 	{"rti", test_rti},

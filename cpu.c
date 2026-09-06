@@ -176,13 +176,19 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0x1: /* ORA (zp, X) */
 		zp = fetch_byte(cpu);
-		address = mem[zp+cpu->xr] + (0x100 * mem[zp+cpu->xr+1]);
+		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
 		cpu->ac = cpu->ac | mem[address];
 		set_nz_flags(cpu, cpu->ac);
 		break;
 	case 0x10: /* BPL rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & negative_flag) != negative_flag) cpu->pc = cpu->pc + offset;
+		break;
+	case 0x11: /* ORA (zp),y */
+		zp = fetch_byte(cpu);
+		address = mem[zp] + (0x100 * mem[zp + 1]) + cpu->yr;
+		cpu->ac = cpu->ac | mem[address];
+		set_nz_flags(cpu, cpu->ac);
 		break;
 	case 0x20: /* JSR abs */
 		push_word(cpu, cpu->pc + 1);
