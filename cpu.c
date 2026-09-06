@@ -141,6 +141,10 @@ void execute_instruction(CPU_CTX *cpu)
 		// printf("rts\n");
 		cpu->pc = pull_word(cpu) + 1;
 		break;
+	case 0x70: /* BVS rel */
+		offset = (i8) fetch_byte(cpu);
+		if ((cpu->sr & overflow_flag) == overflow_flag) cpu->pc = cpu->pc + offset;
+		break;
 	case 0xa0: /* LDY # */
 		// printf("ldy\n");
 		cpu->yr = fetch_byte(cpu);
