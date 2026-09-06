@@ -123,7 +123,7 @@ static void print_registers(CPU_CTX *cpu)
 
 void execute_instruction(CPU_CTX *cpu)
 {
-	u8 instruction;
+	u8 instruction, zp;
 	i8 offset;
 	u16 address;
 
@@ -174,7 +174,12 @@ void execute_instruction(CPU_CTX *cpu)
 			cpu->pc = address;
 		}
 		break;
-
+	case 0x1: /* ORA (zp, X) */
+		zp = fetch_byte(cpu);
+		address = mem[zp+cpu->xr] + (0x100 * mem[zp+cpu->xr+1]);
+		cpu->ac = cpu->ac | mem[address];
+		set_nz_flags(cpu, cpu->ac);
+		break;
 	case 0x10: /* BPL rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & negative_flag) != negative_flag) cpu->pc = cpu->pc + offset;

@@ -97,6 +97,26 @@ void test_brk(void)
 	TEST_CHECK(mem[0x1fa] == 0x3);
 }
 
+void test_ora_zp_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.xr = 0x10;
+	mem[0x100] = 0x01; /* ora ($10, x) */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.ac = 0x55;
+	mem[0x20] = 0x00;
+	mem[0x21] = 0x80;
+	mem[0x8000] = 0xf;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.xr == 0x10);
+	TEST_CHECK((cpu.sr) == 0x0);
+	TEST_CHECK((cpu.ac) == 0x5f);
+}
+
 void test_bpl(void)
 {
 	CPU_CTX cpu;
@@ -370,6 +390,7 @@ TEST_LIST = {
 	{"negative flag", test_negative_flag },
 	{"compare flags", test_cmp_flag },
 	{"brk", test_brk},
+	{"ora (zp, x)", test_ora_zp_x},
 	{"bpl", test_bpl},
 	{"jsr", test_jsr},
 	{"bmi", test_bmi},
