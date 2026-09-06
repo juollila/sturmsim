@@ -21,6 +21,35 @@ void test_negative_flag(void)
 	TEST_CHECK((cpu.sr & negative_flag) == 0x0);
 }
 
+void test_cmp_flag(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	/* register < operand */
+	set_cmp_flags(&cpu, 0x10, 0x20);
+	TEST_CHECK((cpu.sr & zero_flag) == 0x0);
+	TEST_CHECK((cpu.sr & carry_flag) == 0x0);
+	TEST_CHECK((cpu.sr & negative_flag) == negative_flag);
+	set_cmp_flags(&cpu, 0x10, 0xff);
+	TEST_CHECK((cpu.sr & zero_flag) == 0x0);
+	TEST_CHECK((cpu.sr & carry_flag) == 0x0);
+	TEST_CHECK((cpu.sr & negative_flag) == 0x0);
+	/* register = operand */
+	set_cmp_flags(&cpu, 0x10, 0x10);
+	TEST_CHECK((cpu.sr & zero_flag) == zero_flag);
+	TEST_CHECK((cpu.sr & carry_flag) == carry_flag);
+	TEST_CHECK((cpu.sr & negative_flag) == 0x0);
+	/* register > operand */
+	set_cmp_flags(&cpu, 0xd0, 0x10);
+	TEST_CHECK((cpu.sr & zero_flag) == 0x0);
+	TEST_CHECK((cpu.sr & carry_flag) == carry_flag);
+	TEST_CHECK((cpu.sr & negative_flag) == negative_flag);
+	set_cmp_flags(&cpu, 0x30, 0x10);
+	TEST_CHECK((cpu.sr & zero_flag) == 0x0);
+	TEST_CHECK((cpu.sr & carry_flag) == carry_flag);
+	TEST_CHECK((cpu.sr & negative_flag) == 0x0);
+}
+
 void test_bpl(void)
 {
 	CPU_CTX cpu;
@@ -177,9 +206,41 @@ void test_bcs(void)
 	TEST_CHECK(cpu.pc == 0x102);
 }
 
+void test_cpy_imm(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.yr = 0x10;
+	mem[0x100] = 0xc0; /* cpy */
+	mem[0x101] = 0x20; /* #$20 */
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.yr == 0x10);
+	TEST_CHECK((cpu.sr) == negative_flag);
+	mem[0x100] = 0xc0; /* cpy */
+	mem[0x101] = 0x10; /* #$10 */
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.yr == 0x10);
+	TEST_CHECK((cpu.sr) == (zero_flag | carry_flag));
+	mem[0x100] = 0xc0; /* cpy */
+	mem[0x101] = 0x01; /* #$01 */
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.yr == 0x10);
+	TEST_CHECK((cpu.sr) == carry_flag);
+}
+
 TEST_LIST = {
 	{"zero flag", test_zero_flag },
 	{"negative flag", test_negative_flag },
+	{"compare flags", test_cmp_flag },
 	{"bpl", test_bpl},
 	{"jsr", test_jsr},
 	{"bmi", test_bmi},
@@ -189,5 +250,6 @@ TEST_LIST = {
 	{"bcc", test_bcc},
 	{"ldy #", test_ldy_imm},
 	{"bcs", test_bcs},
+	{"cpy #", test_cpy_imm},
 	{ NULL, NULL }
 };

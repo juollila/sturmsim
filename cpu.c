@@ -92,6 +92,26 @@ void set_nz_flags(CPU_CTX *cpu, u8 i)
 	if (i >= 0x80) cpu->sr |= negative_flag; else cpu->sr &= (~negative_flag);
 }
 
+void set_cmp_flags(CPU_CTX *cpu, u8 i, u8 j)
+{
+	i8 result;
+	if (i < j) {
+		cpu->sr &= (~zero_flag);
+		cpu->sr &= (~carry_flag);
+		result = (i8)i - (i8)j;
+		if ((result & 0x80) == 0x80) cpu->sr |= negative_flag; else cpu->sr &= (~negative_flag); 
+	} else if(i > j) {
+		cpu->sr &= (~zero_flag);
+		cpu->sr |= carry_flag;
+		result = (i8)i - (i8)j;
+		if ((result & 0x80) == 0x80) cpu->sr |= negative_flag; else cpu->sr &= (~negative_flag); 
+	} else {
+		cpu->sr |= zero_flag;
+		cpu->sr |= carry_flag;
+		cpu->sr &= (~negative_flag);
+	}
+}
+
 static void print_registers(CPU_CTX *cpu)
 {
 	printf("   PC   SR AC XR YR SP\n");
@@ -172,6 +192,9 @@ void execute_instruction(CPU_CTX *cpu)
 		// printf("lda abs,x\n");
 		cpu->ac = mem[fetch_word(cpu) + cpu->xr];
 		set_nz_flags(cpu, cpu->ac);
+		break;
+	case 0xc0: /* CPY # */
+		set_cmp_flags(cpu, cpu->yr, fetch_byte(cpu));
 		break;
 	case 0xd0: /* BNE */
 		offset = (i8) fetch_byte(cpu);

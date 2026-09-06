@@ -57,6 +57,7 @@ static u8 pull_byte(CPU_CTX *cpu);
 static u16 pull_word(CPU_CTX *cpu);
 static void chrout(u8 i);
 void set_nz_flags(CPU_CTX *cpu, u8 i);
+void set_cmp_flags(CPU_CTX *cpu, u8 i, u8 j);
 static void print_registers(CPU_CTX *cpu);
 void execute_instruction(CPU_CTX *cpu);
 void execute_program(CPU_CTX *cpu);
