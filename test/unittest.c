@@ -253,6 +253,38 @@ void test_bne(void)
 	TEST_CHECK(cpu.pc == 0x82);
 }
 
+void test_cpx_imm(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.xr = 0x10;
+	mem[0x100] = 0xe0; /* cpx */
+	mem[0x101] = 0x91; /* #$91 */
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.xr == 0x10);
+	TEST_CHECK((cpu.sr) == 0x0);
+	mem[0x100] = 0xe0; /* cpx */
+	mem[0x101] = 0x10; /* #$10 */
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.xr == 0x10);
+	TEST_CHECK((cpu.sr) == (zero_flag | carry_flag));
+	cpu.xr = 0x90;
+	mem[0x100] = 0xe0; /* cpx */
+	mem[0x101] = 0x01; /* #$01 */
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.xr == 0x90);
+	TEST_CHECK((cpu.sr) == (carry_flag | negative_flag));
+}
+
 void test_beq(void)
 {
 	CPU_CTX cpu;
@@ -284,6 +316,7 @@ TEST_LIST = {
 	{"bcs", test_bcs},
 	{"cpy #", test_cpy_imm},
 	{"bne", test_bne},
+	{"cpx #", test_cpx_imm},
 	{"beq", test_beq},
 	{ NULL, NULL }
 };

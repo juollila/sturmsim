@@ -200,6 +200,9 @@ void execute_instruction(CPU_CTX *cpu)
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & zero_flag) != zero_flag) cpu->pc = cpu->pc + offset;
 		break;
+	case 0xe0: /* CPX # */
+		set_cmp_flags(cpu, cpu->xr, fetch_byte(cpu));
+		break;
 	case 0xe8: /* INX */
 		cpu->xr = cpu->xr + 1;
 		set_nz_flags(cpu, cpu->xr);
