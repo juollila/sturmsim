@@ -115,6 +115,38 @@ void test_bvs(void)
 	TEST_CHECK(cpu.pc == 0x102);
 }
 
+void test_bcc(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x90; /* bcc */
+	mem[0x101] = 0x4e; /* offset */
+	cpu.pc = 0x100;
+	cpu.sr = carry_flag;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x150);
+}
+
+void test_bcs(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xb0; /* bcs */
+	mem[0x101] = 0x4e; /* offset */
+	cpu.pc = 0x100;
+	cpu.sr = carry_flag;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x150);
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+}
+
 TEST_LIST = {
 	{"zero flag", test_zero_flag },
 	{"negative flag", test_negative_flag },
@@ -124,5 +156,7 @@ TEST_LIST = {
 	{"bvc", test_bvc},
 	{"rts", test_rts},
 	{"bvs", test_bvs},
+	{"bcc", test_bcc},
+	{"bcs", test_bcs},
 	{ NULL, NULL }
 };

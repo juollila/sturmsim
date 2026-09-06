@@ -145,6 +145,10 @@ void execute_instruction(CPU_CTX *cpu)
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & overflow_flag) == overflow_flag) cpu->pc = cpu->pc + offset;
 		break;
+	case 0x90: /* BCC rel */
+		offset = (i8) fetch_byte(cpu);
+		if ((cpu->sr & carry_flag) != carry_flag) cpu->pc = cpu->pc + offset;
+		break;
 	case 0xa0: /* LDY # */
 		// printf("ldy\n");
 		cpu->yr = fetch_byte(cpu);
@@ -159,6 +163,10 @@ void execute_instruction(CPU_CTX *cpu)
 		// printf("lda\n");
 		cpu->ac = fetch_byte(cpu);
 		set_nz_flags(cpu, cpu->ac);
+		break;
+	case 0xb0: /* BCS rel */
+		offset = (i8) fetch_byte(cpu);
+		if ((cpu->sr & carry_flag) == carry_flag) cpu->pc = cpu->pc + offset;
 		break;
 	case 0xbd: /* LDA abs,X */
 		// printf("lda abs,x\n");
