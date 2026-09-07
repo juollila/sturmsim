@@ -136,6 +136,27 @@ u8 adc(CPU_CTX *cpu, u8 i, u8 j)
 	return r;
 }
 
+u8 sbc(CPU_CTX *cpu, u8 i, u8 j)
+{
+	int diff = i - j - ((cpu->sr & carry_flag) ? 0 : 1);
+	u8 r = diff;
+	/* set overflow flag if needed */
+	if ((((i ^ j) & (i ^ r)) & 0x80) != 0) {
+		cpu->sr |= overflow_flag;
+	} else {
+		cpu->sr &= (~overflow_flag);
+	}
+	/* set carry flag if needed */
+	if (diff >= 0x0) {
+		cpu->sr |= carry_flag; /* no borrow */
+	} else {
+		cpu->sr &= (~carry_flag); /* borrow */
+	}
+	/* set negative and zero flags if needed */
+	set_nz_flags(cpu, r);
+	return r;
+}
+
 static void print_registers(CPU_CTX *cpu)
 {
 	printf("   PC   SR AC XR YR SP\n");
@@ -324,12 +345,27 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0xc0: /* CPY # */
 		set_cmp_flags(cpu, cpu->yr, fetch_byte(cpu));
 		break;
+	case 0xc1: /* CMP (zp, X) */
+		zp = fetch_byte(cpu);
+		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
+		set_cmp_flags(cpu, cpu->ac, mem[address]);
+		break;
 	case 0xd0: /* BNE */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & zero_flag) != zero_flag) cpu->pc = cpu->pc + offset;
 		break;
+	case 0xd1: /* CMP (zp),y */
+		zp = fetch_byte(cpu);
+		address = mem[zp] + (0x100 * mem[zp + 1]) + cpu->yr;
+		set_cmp_flags(cpu, cpu->ac, mem[address]);
+		break;
 	case 0xe0: /* CPX # */
 		set_cmp_flags(cpu, cpu->xr, fetch_byte(cpu));
+		break;
+	case 0xe1: /* SBC (zp, X) */
+		zp = fetch_byte(cpu);
+		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
+		cpu->ac = sbc(cpu, cpu->ac, mem[address]);
 		break;
 	case 0xe8: /* INX */
 		cpu->xr = cpu->xr + 1;
@@ -338,6 +374,11 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0xf0: /* BEQ */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & zero_flag) == zero_flag) cpu->pc = cpu->pc + offset;
+		break;
+	case 0xf1: /* SBC (zp),y */
+		zp = fetch_byte(cpu);
+		address = mem[zp] + (0x100 * mem[zp + 1]) + cpu->yr;
+		cpu->ac = sbc(cpu, cpu->ac, mem[address]);
 		break;
 	default:
 		printf("Not implemented instruction\n");
