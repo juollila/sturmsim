@@ -115,6 +115,27 @@ void set_cmp_flags(CPU_CTX *cpu, u8 i, u8 j)
 	}
 }
 
+u8 adc(CPU_CTX *cpu, u8 i, u8 j)
+{
+	int sum = i + j + ((cpu->sr & carry_flag) ? 1 : 0);
+	u8 r = sum;
+	/* set overflow flag if needed */
+	if (((i ^ r) & (j ^ r) & 0x80) != 0) {
+		cpu->sr |= overflow_flag;
+	} else {
+		cpu->sr &= (~overflow_flag);
+	}
+	/* set carry flag if needed */
+	if (sum > 0xff) {
+		cpu->sr |= carry_flag;
+	} else {
+		cpu->sr &= (~carry_flag);
+	}
+	/* set negative and zero flags if needed */
+	set_nz_flags(cpu, r);
+	return r;
+}
+
 static void print_registers(CPU_CTX *cpu)
 {
 	printf("   PC   SR AC XR YR SP\n");
@@ -235,6 +256,11 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x60: /* RTS */
 		// printf("rts\n");
 		cpu->pc = pull_word(cpu) + 1;
+		break;
+	case 0x61: /* ADC (zp, X) */
+		zp = fetch_byte(cpu);
+		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
+		cpu->ac = adc(cpu, cpu->ac, mem[address]);
 		break;
 	case 0x70: /* BVS rel */
 		offset = (i8) fetch_byte(cpu);

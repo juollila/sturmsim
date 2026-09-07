@@ -21,7 +21,7 @@ void test_negative_flag(void)
 	TEST_CHECK((cpu.sr & negative_flag) == 0x0);
 }
 
-void test_cmp_flag(void)
+void test_cmp_flags(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
@@ -49,6 +49,56 @@ void test_cmp_flag(void)
 	TEST_CHECK((cpu.sr & carry_flag) == carry_flag);
 	TEST_CHECK((cpu.sr & negative_flag) == 0x0);
 }
+
+void test_adc_flags(void)
+{
+	CPU_CTX cpu;
+	u8 result;
+	init_cpu(&cpu);
+	cpu.sr = 0;
+	result = adc(&cpu, 0x40, 0x40);
+	TEST_CHECK(result == 0x80);
+	TEST_CHECK((cpu.sr & carry_flag) == 0);
+	TEST_CHECK((cpu.sr & overflow_flag) == overflow_flag);
+	TEST_CHECK((cpu.sr & negative_flag) == negative_flag);
+	TEST_CHECK((cpu.sr & zero_flag) == 0);
+	cpu.sr = 0;
+	result = adc(&cpu, 0xff, 0x01);
+	TEST_CHECK(result == 0x0);
+	TEST_CHECK((cpu.sr & carry_flag) == carry_flag);
+	TEST_CHECK((cpu.sr & overflow_flag) == 0);
+	TEST_CHECK((cpu.sr & negative_flag) == 0);
+	TEST_CHECK((cpu.sr & zero_flag) == zero_flag);
+	cpu.sr = carry_flag;
+	result = adc(&cpu, 0x7f, 0x0);
+	TEST_CHECK(result == 0x80);
+	TEST_CHECK((cpu.sr & carry_flag) == 0);
+	TEST_CHECK((cpu.sr & overflow_flag) == overflow_flag);
+	TEST_CHECK((cpu.sr & negative_flag) == negative_flag);
+	TEST_CHECK((cpu.sr & zero_flag) == 0);
+	cpu.sr = 0;
+	result = adc(&cpu, 0x80, 0x80);
+	TEST_CHECK(result == 0x0);
+	TEST_CHECK((cpu.sr & carry_flag) == carry_flag);
+	TEST_CHECK((cpu.sr & overflow_flag) == overflow_flag);
+	TEST_CHECK((cpu.sr & negative_flag) == 0);
+	TEST_CHECK((cpu.sr & zero_flag) == zero_flag);
+	cpu.sr = 0;
+	result = adc(&cpu, 0x50, 0x10);
+	TEST_CHECK(result == 0x60);
+	TEST_CHECK((cpu.sr & carry_flag) == 0);
+	TEST_CHECK((cpu.sr & overflow_flag) == 0);
+	TEST_CHECK((cpu.sr & negative_flag) == 0);
+	TEST_CHECK((cpu.sr & zero_flag) == 0);
+	cpu.sr = carry_flag;
+	result = adc(&cpu, 0xff, 0xff);
+	TEST_CHECK(result == 0xff);
+	TEST_CHECK((cpu.sr & carry_flag) == carry_flag);
+	TEST_CHECK((cpu.sr & overflow_flag) == 0);
+	TEST_CHECK((cpu.sr & negative_flag) == negative_flag);
+	TEST_CHECK((cpu.sr & zero_flag) == 0);
+}
+
 
 void test_brk(void)
 {
@@ -313,6 +363,25 @@ void test_rts(void)
 	TEST_CHECK(cpu.sp == 0xff);
 }
 
+void test_adc_zp_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.xr = 0x10;
+	mem[0x100] = 0x61; /* adc ($10, x) */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = carry_flag;
+	cpu.ac = 0x55;
+	mem[0x20] = 0x00;
+	mem[0x21] = 0x80;
+	mem[0x8000] = 0xf;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK((cpu.sr) == 0x0);
+	TEST_CHECK((cpu.ac) == 0x65);
+}
+
 void test_bvs(void)
 {
 	CPU_CTX cpu;
@@ -489,7 +558,8 @@ void test_beq(void)
 TEST_LIST = {
 	{"zero flag", test_zero_flag },
 	{"negative flag", test_negative_flag },
-	{"compare flags", test_cmp_flag },
+	{"compare flags", test_cmp_flags },
+	{"adc flags", test_adc_flags },
 	{"brk", test_brk},
 	{"ora (zp, x)", test_ora_zp_x},
 	{"bpl", test_bpl},
@@ -503,6 +573,7 @@ TEST_LIST = {
 	{"bvc", test_bvc},
 	{"and (zp), y", test_eor_zp_y},
 	{"rts", test_rts},
+	{"add (zp, x)", test_adc_zp_x},
 	{"bvs", test_bvs},
 	{"bcc", test_bcc},
 	{"ldy #", test_ldy_imm},
