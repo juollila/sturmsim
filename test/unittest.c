@@ -303,6 +303,30 @@ void test_and_zp_x(void)
 	TEST_CHECK((cpu.ac) == 0x05);
 }
 
+void test_bit_zp(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x24; /* bit zp */
+	mem[0x101] = 0x20;
+	mem[0x20] = 0x7f;
+	cpu.pc = 0x100;
+	cpu.ac = 0x80;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == (zero_flag | overflow_flag));
+	mem[0x100] = 0x24; /* bit zp */
+	mem[0x101] = 0x20;
+	mem[0x20] = 0x80;
+	cpu.pc = 0x100;
+	cpu.ac = 0x80;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == negative_flag);
+}
+
 void test_bmi(void)
 {
 	CPU_CTX cpu;
@@ -832,6 +856,7 @@ TEST_LIST = {
 	{"ora (zp), y", test_ora_zp_y},
 	{"jsr", test_jsr},
 	{"and (zp, x)", test_and_zp_x},
+	{"bit zp", test_bit_zp},
 	{"bmi", test_bmi},
 	{"and (zp), y", test_and_zp_y},
 	{"rti", test_rti},

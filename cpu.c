@@ -243,6 +243,12 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = cpu->ac & mem[address];
 		set_nz_flags(cpu, cpu->ac);
 		break;
+	case 0x24: /* BTS zp */
+		zp = fetch_byte(cpu);
+		if ((cpu->ac & mem[zp]) == 0) cpu->sr |= zero_flag; else cpu->sr &= (~zero_flag);
+		if ((mem[zp] & 0x80) == 0x80) cpu->sr |= negative_flag; else cpu->sr &= (~negative_flag);
+		if ((mem[zp] & 0x40) == 0x40) cpu->sr |= overflow_flag; else cpu->sr &= (~overflow_flag);
+		break;
 	case 0x30: /* BMI rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & negative_flag) == negative_flag) cpu->pc = cpu->pc + offset;
