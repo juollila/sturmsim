@@ -398,6 +398,26 @@ void test_bvs(void)
 	TEST_CHECK(cpu.pc == 0x102);
 }
 
+void test_adc_zp_y(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.yr = 0x10;
+	mem[0x100] = 0x71; /* adc ($20), y */
+	mem[0x101] = 0x20;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.ac = 0x55;
+	mem[0x20] = 0x00;
+	mem[0x21] = 0x80;
+	mem[0x8010] = 0xf0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.yr == 0x10);
+	TEST_CHECK((cpu.sr) == carry_flag);
+	TEST_CHECK((cpu.ac) == 0x45);
+}
+
 void test_bcc(void)
 {
 	CPU_CTX cpu;
@@ -571,10 +591,11 @@ TEST_LIST = {
 	{"rti", test_rti},
 	{"eor (zp, x)", test_eor_zp_x},
 	{"bvc", test_bvc},
-	{"and (zp), y", test_eor_zp_y},
+	{"eor (zp), y", test_eor_zp_y},
 	{"rts", test_rts},
 	{"add (zp, x)", test_adc_zp_x},
 	{"bvs", test_bvs},
+	{"adc (zp), y", test_adc_zp_y},
 	{"bcc", test_bcc},
 	{"ldy #", test_ldy_imm},
 	{"bcs", test_bcs},

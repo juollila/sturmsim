@@ -266,6 +266,11 @@ void execute_instruction(CPU_CTX *cpu)
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & overflow_flag) == overflow_flag) cpu->pc = cpu->pc + offset;
 		break;
+	case 0x71: /*ADC (zp),y */
+		zp = fetch_byte(cpu);
+		address = mem[zp] + (0x100 * mem[zp + 1]) + cpu->yr;
+		cpu->ac = adc(cpu, cpu->ac, mem[address]);
+		break;
 	case 0x90: /* BCC rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & carry_flag) != carry_flag) cpu->pc = cpu->pc + offset;
