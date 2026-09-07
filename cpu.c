@@ -290,6 +290,12 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->yr = fetch_byte(cpu);
 		set_nz_flags(cpu, cpu->yr);
 		break;
+	case 0xa1: /* LDA (zp, X) */
+		zp = fetch_byte(cpu);
+		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
+		cpu->ac = mem[address];
+		set_nz_flags(cpu, cpu->ac);
+		break;
 	case 0xa2: /* LDX # */
 		// printf("ldx\n");
 		cpu->xr = fetch_byte(cpu);
@@ -303,6 +309,12 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0xb0: /* BCS rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & carry_flag) == carry_flag) cpu->pc = cpu->pc + offset;
+		break;
+	case 0xb1: /* LDA (zp),y */
+		zp = fetch_byte(cpu);
+		address = mem[zp] + (0x100 * mem[zp + 1]) + cpu->yr;
+		cpu->ac = mem[address];
+		set_nz_flags(cpu, cpu->ac);
 		break;
 	case 0xbd: /* LDA abs,X */
 		// printf("lda abs,x\n");
