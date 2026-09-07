@@ -418,6 +418,25 @@ void test_adc_zp_y(void)
 	TEST_CHECK((cpu.ac) == 0x45);
 }
 
+void test_sta_zp_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.xr = 0x10;
+	mem[0x100] = 0x81; /* sta ($10, x) */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.ac = 0x55;
+	mem[0x20] = 0x00;
+	mem[0x21] = 0x80;
+	mem[0x8000] = 0xf;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK((cpu.sr) == 0x0);
+	TEST_CHECK(mem[0x8000] == 0x55);
+}
+
 void test_bcc(void)
 {
 	CPU_CTX cpu;
@@ -432,6 +451,25 @@ void test_bcc(void)
 	cpu.sr = 0x0;
 	execute_instruction(&cpu);
 	TEST_CHECK(cpu.pc == 0x150);
+}
+
+void test_sta_zp_y(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.yr = 0x10;
+	mem[0x100] = 0x91; /* sta ($20), y */
+	mem[0x101] = 0x20;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.ac = 0x55;
+	mem[0x20] = 0x00;
+	mem[0x21] = 0x80;
+	mem[0x8010] = 0xf0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK((cpu.sr) == 0x0);
+	TEST_CHECK(mem[0x8010] == 0x55);
 }
 
 void test_ldy_imm(void)
@@ -596,7 +634,9 @@ TEST_LIST = {
 	{"add (zp, x)", test_adc_zp_x},
 	{"bvs", test_bvs},
 	{"adc (zp), y", test_adc_zp_y},
+	{"sta (zp, x)", test_sta_zp_x},
 	{"bcc", test_bcc},
+	{"sta (zp), y", test_sta_zp_y},
 	{"ldy #", test_ldy_imm},
 	{"bcs", test_bcs},
 	{"cpy #", test_cpy_imm},
