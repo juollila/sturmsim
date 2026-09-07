@@ -584,6 +584,36 @@ void test_lda_zp_x(void)
 	TEST_CHECK(cpu.ac == 0xff);
 }
 
+void test_ldx_imm(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xa2; /* ldx */
+	mem[0x101] = 0x4e; /* #$4e */
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.xr == 0x4e);
+	TEST_CHECK((cpu.sr) == 0);
+	mem[0x100] = 0xa2; /* ldx */
+	mem[0x101] = 0x00; /* #$0 */
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.xr == 0x0);
+	TEST_CHECK((cpu.sr) == zero_flag);
+	mem[0x100] = 0xa2; /* ldx */
+	mem[0x101] = 0xff; /* #$ff */
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.xr == 0xff);
+	TEST_CHECK((cpu.sr) == negative_flag);
+}
+
 void test_bcs(void)
 {
 	CPU_CTX cpu;
@@ -817,6 +847,7 @@ TEST_LIST = {
 	{"sta (zp), y", test_sta_zp_y},
 	{"ldy #", test_ldy_imm},
 	{"lda (zp, x)", test_lda_zp_x},
+	{"ldx #", test_ldx_imm},
 	{"bcs", test_bcs},
 	{"lda (zp), y", test_lda_zp_y},
 	{"cpy #", test_cpy_imm},
