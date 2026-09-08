@@ -360,6 +360,22 @@ void test_bit_zp(void)
 	TEST_CHECK(cpu.sr == negative_flag);
 }
 
+void test_and_zp(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.ac = 0x08;
+	mem[0x10] = 0x80;
+	mem[0x100] = 0x25; /* and $10 */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == zero_flag);
+	TEST_CHECK(cpu.ac == 0x0);
+}
+
 void test_bmi(void)
 {
 	CPU_CTX cpu;
@@ -394,6 +410,23 @@ void test_and_zp_y_ind(void)
 	TEST_CHECK(cpu.yr == 0x10);
 	TEST_CHECK((cpu.sr) == 0);
 	TEST_CHECK((cpu.ac) == 0x50);
+}
+
+void test_and_zp_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.ac = 0x88;
+	cpu.xr = 0x10;
+	mem[0x20] = 0x80;
+	mem[0x100] = 0x35; /* and $10,x */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == negative_flag);
+	TEST_CHECK(cpu.ac == 0x80);
 }
 
 void test_rti(void)
@@ -979,46 +1012,48 @@ TEST_LIST = {
 	{"compare flags", test_cmp_flags },
 	{"adc flags", test_adc_flags },
 	{"sbc flags", test_sbc_flags },
-	{"brk", test_brk},
-	{"ora (zp,x)", test_ora_zp_x_ind},
-	{"ora zp", test_ora_zp},
-	{"bpl", test_bpl},
-	{"ora (zp),y", test_ora_zp_y_ind},
-	{"ora zp,x", test_ora_zp_x},
-	{"jsr", test_jsr},
-	{"and (zp,x)", test_and_zp_x_ind},
-	{"bit zp", test_bit_zp},
-	{"bmi", test_bmi},
-	{"and (zp),y", test_and_zp_y_ind},
-	{"rti", test_rti},
-	{"eor (zp,x)", test_eor_zp_x_ind},
-	{"bvc", test_bvc},
-	{"eor (zp),y", test_eor_zp_y_ind},
-	{"rts", test_rts},
-	{"add (zp,x)", test_adc_zp_x_ind},
-	{"bvs", test_bvs},
-	{"adc (zp),y", test_adc_zp_y_ind},
-	{"sta (zp,x)", test_sta_zp_x_ind},
-	{"sty zp", test_sty_zp},
-	{"bcc", test_bcc},
-	{"sta (zp),y", test_sta_zp_y_ind},
-	{"sty zp,x", test_sty_zp_x},
-	{"ldy #", test_ldy_imm},
-	{"lda (zp,x)", test_lda_zp_x_ind},
-	{"ldx #", test_ldx_imm},
-	{"ldy zp", test_ldy_zp},
-	{"bcs", test_bcs},
-	{"lda (zp),y", test_lda_zp_y_ind},
-	{"ldy zp,x", test_ldy_zp_x},
-	{"cpy #", test_cpy_imm},
-	{"cmp (zp,x)", test_cmp_zp_x_ind},
-	{"cpy zp", test_cpy_zp},
-	{"bne", test_bne},
-	{"cmp (zp),y", test_cmp_zp_y_ind},
-	{"cpx #", test_cpx_imm},
-	{"sbc (zp,x)", test_sbc_zp_x_ind},
-	{"cpx zp", test_cpx_zp},
-	{"beq", test_beq},
-	{"sbc (zp),y", test_sbc_zp_y_ind},
+	{"brk", test_brk}, 			// 0x0
+	{"ora (zp,x)", test_ora_zp_x_ind},	// 0x1
+	{"ora zp", test_ora_zp},		// 0x5
+	{"bpl", test_bpl},			// 0x10
+	{"ora (zp),y", test_ora_zp_y_ind},	// 0x11
+	{"ora zp,x", test_ora_zp_x},		// 0x15
+	{"jsr", test_jsr},			// 0x20
+	{"and (zp,x)", test_and_zp_x_ind},	// 0x21
+	{"bit zp", test_bit_zp},		// 0x24
+	{"and zp", test_and_zp},		// 0x25
+	{"bmi", test_bmi},			// 0x30
+	{"and (zp),y", test_and_zp_y_ind},	// 0x31
+	{"and zp,x", test_and_zp_x},		// 0x35
+	{"rti", test_rti},			// 0x40
+	{"eor (zp,x)", test_eor_zp_x_ind},	// 0x41
+	{"bvc", test_bvc},			// 0x50
+	{"eor (zp),y", test_eor_zp_y_ind},	// 0x51
+	{"rts", test_rts},			// 0x60
+	{"adc (zp,x)", test_adc_zp_x_ind},	// 0x61	
+	{"bvs", test_bvs},			// 0x70
+	{"adc (zp),y", test_adc_zp_y_ind},	// 0x71
+	{"sta (zp,x)", test_sta_zp_x_ind},	// 0x81
+	{"sty zp", test_sty_zp},		// 0x84
+	{"bcc", test_bcc},			// 0x90
+	{"sta (zp),y", test_sta_zp_y_ind},	// 0x91
+	{"sty zp,x", test_sty_zp_x},		// 0x94
+	{"ldy #", test_ldy_imm},		// 0xa0
+	{"lda (zp,x)", test_lda_zp_x_ind},	// 0xa1
+	{"ldx #", test_ldx_imm},		// 0xa2
+	{"ldy zp", test_ldy_zp},		// 0xa4
+	{"bcs", test_bcs},			// 0xb0
+	{"lda (zp),y", test_lda_zp_y_ind},	// 0xb1
+	{"ldy zp,x", test_ldy_zp_x},		// 0xb4
+	{"cpy #", test_cpy_imm},		// 0xc0
+	{"cmp (zp,x)", test_cmp_zp_x_ind},	// 0xc1
+	{"cpy zp", test_cpy_zp},		// 0xc4
+	{"bne", test_bne},			// 0xd0
+	{"cmp (zp),y", test_cmp_zp_y_ind},	// 0xd1
+	{"cpx #", test_cpx_imm},		// 0xe0
+	{"sbc (zp,x)", test_sbc_zp_x_ind},	// 0xe1
+	{"cpx zp", test_cpx_zp},		// 0xe4
+	{"beq", test_beq},			// 0xf0
+	{"sbc (zp),y", test_sbc_zp_y_ind},	// 0xf1
 	{ NULL, NULL }
 };
