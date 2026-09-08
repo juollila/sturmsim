@@ -222,6 +222,10 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = cpu->ac | mem[address];
 		set_nz_flags(cpu, cpu->ac);
 		break;
+	case 0x5: /* ORA zp */
+		cpu->ac = cpu->ac | mem[fetch_byte(cpu)];
+		set_nz_flags(cpu, cpu->ac);
+		break;
 	case 0x10: /* BPL rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & negative_flag) != negative_flag) cpu->pc = cpu->pc + offset;
@@ -230,6 +234,10 @@ void execute_instruction(CPU_CTX *cpu)
 		zp = fetch_byte(cpu);
 		address = mem[zp] + (0x100 * mem[zp + 1]) + cpu->yr;
 		cpu->ac = cpu->ac | mem[address];
+		set_nz_flags(cpu, cpu->ac);
+		break;
+	case 0x15: /* ORA zp,x */
+		cpu->ac = cpu->ac | mem[fetch_byte(cpu) + cpu->xr];
 		set_nz_flags(cpu, cpu->ac);
 		break;
 	case 0x20: /* JSR abs */
@@ -304,8 +312,7 @@ void execute_instruction(CPU_CTX *cpu)
 		mem[address] = cpu->ac;
 		break;
 	case 0x84: /* STY zp */
-		address = fetch_byte(cpu);
-		mem[address] = cpu->yr;
+		mem[fetch_byte(cpu)] = cpu->yr;
 		break;
 	case 0x90: /* BCC rel */
 		offset = (i8) fetch_byte(cpu);
