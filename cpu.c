@@ -368,6 +368,9 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0xc0: /* CPY # */
 		set_cmp_flags(cpu, cpu->yr, fetch_byte(cpu));
 		break;
+	case 0xc4: /* CPY zp */
+		set_cmp_flags(cpu, cpu->yr, mem[fetch_byte(cpu)]);
+		break;
 	case 0xc1: /* CMP (zp,x) */
 		zp = fetch_byte(cpu);
 		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
@@ -389,6 +392,9 @@ void execute_instruction(CPU_CTX *cpu)
 		zp = fetch_byte(cpu);
 		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
 		cpu->ac = sbc(cpu, cpu->ac, mem[address]);
+		break;
+	case 0xe4: /* CPX zp */
+		set_cmp_flags(cpu, cpu->xr, mem[fetch_byte(cpu)]);
 		break;
 	case 0xe8: /* INX */
 		cpu->xr = cpu->xr + 1;
