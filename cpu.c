@@ -286,6 +286,10 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = cpu->ac ^ mem[address];
 		set_nz_flags(cpu, cpu->ac);
 		break;
+	case 0x45: /* EOR zp */
+		cpu->ac = cpu->ac ^ mem[fetch_byte(cpu)];
+		set_nz_flags(cpu, cpu->ac);
+		break;
 	case 0x50: /* BVC rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & overflow_flag) != overflow_flag) cpu->pc = cpu->pc + offset;
@@ -294,6 +298,10 @@ void execute_instruction(CPU_CTX *cpu)
 		zp = fetch_byte(cpu);
 		address = mem[zp] + (0x100 * mem[zp + 1]) + cpu->yr;
 		cpu->ac = cpu->ac ^ mem[address];
+		set_nz_flags(cpu, cpu->ac);
+		break;
+	case 0x55: /* EOR zp,x */
+		cpu->ac = cpu->ac ^ mem[fetch_byte(cpu) + cpu->xr];
 		set_nz_flags(cpu, cpu->ac);
 		break;
 	case 0x60: /* RTS */
