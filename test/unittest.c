@@ -210,7 +210,7 @@ void test_brk(void)
 	TEST_CHECK(mem[0x1fa] == 0x3);
 }
 
-void test_ora_zp_x(void)
+void test_ora_zp_x_ind(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
@@ -248,7 +248,7 @@ void test_bpl(void)
 }
 
 
-void test_ora_zp_y(void)
+void test_ora_zp_y_ind(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
@@ -283,7 +283,7 @@ void test_jsr(void)
 	TEST_CHECK(cpu.sp == 0xfd);
 }
 
-void test_and_zp_x(void)
+void test_and_zp_x_ind(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
@@ -343,7 +343,7 @@ void test_bmi(void)
 	TEST_CHECK(cpu.pc == 0x102);
 }
 
-void test_and_zp_y(void)
+void test_and_zp_y_ind(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
@@ -380,7 +380,7 @@ void test_rti(void)
 	TEST_CHECK(cpu.sp == 0xff);
 }
 
-void test_eor_zp_x(void)
+void test_eor_zp_x_ind(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
@@ -416,7 +416,7 @@ void test_bvc(void)
 	TEST_CHECK(cpu.pc == 0xff);
 }
 
-void test_eor_zp_y(void)
+void test_eor_zp_y_ind(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
@@ -450,7 +450,7 @@ void test_rts(void)
 	TEST_CHECK(cpu.sp == 0xff);
 }
 
-void test_adc_zp_x(void)
+void test_adc_zp_x_ind(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
@@ -485,7 +485,7 @@ void test_bvs(void)
 	TEST_CHECK(cpu.pc == 0x102);
 }
 
-void test_adc_zp_y(void)
+void test_adc_zp_y_ind(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
@@ -505,7 +505,7 @@ void test_adc_zp_y(void)
 	TEST_CHECK((cpu.ac) == 0x45);
 }
 
-void test_sta_zp_x(void)
+void test_sta_zp_x_ind(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
@@ -524,6 +524,21 @@ void test_sta_zp_x(void)
 	TEST_CHECK(mem[0x8000] == 0x55);
 }
 
+void test_sty_zp(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.yr = 0x5a;
+	mem[0x100] = 0x84; /* sty $10 */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK((cpu.sr) == 0x0);
+	TEST_CHECK(mem[0x10] == 0x5a);
+}
+
 void test_bcc(void)
 {
 	CPU_CTX cpu;
@@ -540,7 +555,7 @@ void test_bcc(void)
 	TEST_CHECK(cpu.pc == 0x150);
 }
 
-void test_sta_zp_y(void)
+void test_sta_zp_y_ind(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
@@ -557,6 +572,22 @@ void test_sta_zp_y(void)
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK((cpu.sr) == 0x0);
 	TEST_CHECK(mem[0x8010] == 0x55);
+}
+
+void test_sty_zp_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.yr = 0x5a;
+	cpu.xr = 0x10;
+	mem[0x100] = 0x94; /* sty $10,x */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK((cpu.sr) == 0x0);
+	TEST_CHECK(mem[0x20] == 0x5a);
 }
 
 void test_ldy_imm(void)
@@ -589,7 +620,7 @@ void test_ldy_imm(void)
 	TEST_CHECK((cpu.sr) == negative_flag);
 }
 
-void test_lda_zp_x(void)
+void test_lda_zp_x_ind(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
@@ -654,7 +685,7 @@ void test_bcs(void)
 	TEST_CHECK(cpu.pc == 0x102);
 }
 
-void test_lda_zp_y(void)
+void test_lda_zp_y_ind(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
@@ -704,7 +735,7 @@ void test_cpy_imm(void)
 	TEST_CHECK((cpu.sr) == carry_flag);
 }
 
-void test_cmp_zp_x(void)
+void test_cmp_zp_x_ind(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
@@ -739,7 +770,7 @@ void test_bne(void)
 	TEST_CHECK(cpu.pc == 0x82);
 }
 
-void test_cmp_zp_y(void)
+void test_cmp_zp_y_ind(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
@@ -790,7 +821,7 @@ void test_cpx_imm(void)
 	TEST_CHECK((cpu.sr) == (carry_flag | negative_flag));
 }
 
-void test_sbc_zp_x(void)
+void test_sbc_zp_x_ind(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
@@ -825,7 +856,7 @@ void test_beq(void)
 	TEST_CHECK(cpu.pc == 0x102);
 }
 
-void test_sbc_zp_y(void)
+void test_sbc_zp_y_ind(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
@@ -851,37 +882,39 @@ TEST_LIST = {
 	{"adc flags", test_adc_flags },
 	{"sbc flags", test_sbc_flags },
 	{"brk", test_brk},
-	{"ora (zp, x)", test_ora_zp_x},
+	{"ora (zp,x)", test_ora_zp_x_ind},
 	{"bpl", test_bpl},
-	{"ora (zp), y", test_ora_zp_y},
+	{"ora (zp),y", test_ora_zp_y_ind},
 	{"jsr", test_jsr},
-	{"and (zp, x)", test_and_zp_x},
+	{"and (zp,x)", test_and_zp_x_ind},
 	{"bit zp", test_bit_zp},
 	{"bmi", test_bmi},
-	{"and (zp), y", test_and_zp_y},
+	{"and (zp),y", test_and_zp_y_ind},
 	{"rti", test_rti},
-	{"eor (zp, x)", test_eor_zp_x},
+	{"eor (zp,x)", test_eor_zp_x_ind},
 	{"bvc", test_bvc},
-	{"eor (zp), y", test_eor_zp_y},
+	{"eor (zp),y", test_eor_zp_y_ind},
 	{"rts", test_rts},
-	{"add (zp, x)", test_adc_zp_x},
+	{"add (zp,x)", test_adc_zp_x_ind},
 	{"bvs", test_bvs},
-	{"adc (zp), y", test_adc_zp_y},
-	{"sta (zp, x)", test_sta_zp_x},
+	{"adc (zp),y", test_adc_zp_y_ind},
+	{"sta (zp,x)", test_sta_zp_x_ind},
+	{"sty zp", test_sty_zp},
 	{"bcc", test_bcc},
-	{"sta (zp), y", test_sta_zp_y},
+	{"sta (zp),y", test_sta_zp_y_ind},
+	{"sty zp,x", test_sty_zp_x},
 	{"ldy #", test_ldy_imm},
-	{"lda (zp, x)", test_lda_zp_x},
+	{"lda (zp,x)", test_lda_zp_x_ind},
 	{"ldx #", test_ldx_imm},
 	{"bcs", test_bcs},
-	{"lda (zp), y", test_lda_zp_y},
+	{"lda (zp),y", test_lda_zp_y_ind},
 	{"cpy #", test_cpy_imm},
-	{"cmp (zp, x)", test_cmp_zp_x},
+	{"cmp (zp,x)", test_cmp_zp_x_ind},
 	{"bne", test_bne},
-	{"cmp (zp), y", test_cmp_zp_y},
+	{"cmp (zp),y", test_cmp_zp_y_ind},
 	{"cpx #", test_cpx_imm},
-	{"sbc (zp, x)", test_sbc_zp_x},
+	{"sbc (zp,x)", test_sbc_zp_x_ind},
 	{"beq", test_beq},
-	{"sbc (zp), y", test_sbc_zp_y},
+	{"sbc (zp),y", test_sbc_zp_y_ind},
 	{ NULL, NULL }
 };

@@ -216,7 +216,7 @@ void execute_instruction(CPU_CTX *cpu)
 			cpu->pc = address;
 		}
 		break;
-	case 0x1: /* ORA (zp, X) */
+	case 0x1: /* ORA (zp,x) */
 		zp = fetch_byte(cpu);
 		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
 		cpu->ac = cpu->ac | mem[address];
@@ -237,7 +237,7 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->pc = fetch_word(cpu);
 		// printf("jsr %04x\n", cpu->pc);
 		break;
-	case 0x21: /* AND (zp, X) */
+	case 0x21: /* AND (zp,x) */
 		zp = fetch_byte(cpu);
 		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
 		cpu->ac = cpu->ac & mem[address];
@@ -264,7 +264,7 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->sr &= (~break_flag);
 		cpu->pc = pull_word(cpu);
 		break;
-	case 0x41: /* EOR (zp, X) */
+	case 0x41: /* EOR (zp,x) */
 		zp = fetch_byte(cpu);
 		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
 		cpu->ac = cpu->ac ^ mem[address];
@@ -284,7 +284,7 @@ void execute_instruction(CPU_CTX *cpu)
 		// printf("rts\n");
 		cpu->pc = pull_word(cpu) + 1;
 		break;
-	case 0x61: /* ADC (zp, X) */
+	case 0x61: /* ADC (zp,x) */
 		zp = fetch_byte(cpu);
 		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
 		cpu->ac = adc(cpu, cpu->ac, mem[address]);
@@ -298,10 +298,14 @@ void execute_instruction(CPU_CTX *cpu)
 		address = mem[zp] + (0x100 * mem[zp + 1]) + cpu->yr;
 		cpu->ac = adc(cpu, cpu->ac, mem[address]);
 		break;
-	case 0x81: /* STA (zp, X) */
+	case 0x81: /* STA (zp, x) */
 		zp = fetch_byte(cpu);
 		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
 		mem[address] = cpu->ac;
+		break;
+	case 0x84: /* STY zp */
+		address = fetch_byte(cpu);
+		mem[address] = cpu->yr;
 		break;
 	case 0x90: /* BCC rel */
 		offset = (i8) fetch_byte(cpu);
@@ -312,12 +316,16 @@ void execute_instruction(CPU_CTX *cpu)
 		address = mem[zp] + (0x100 * mem[zp + 1]) + cpu->yr;
 		mem[address] = cpu->ac;
 		break;
+	case 0x94: /* STY zp,x */
+		address = fetch_byte(cpu) + cpu->xr;
+		mem[address] = cpu->yr;
+		break;
 	case 0xa0: /* LDY # */
 		// printf("ldy\n");
 		cpu->yr = fetch_byte(cpu);
 		set_nz_flags(cpu, cpu->yr);
 		break;
-	case 0xa1: /* LDA (zp, X) */
+	case 0xa1: /* LDA (zp,x) */
 		zp = fetch_byte(cpu);
 		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
 		cpu->ac = mem[address];
@@ -343,7 +351,7 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = mem[address];
 		set_nz_flags(cpu, cpu->ac);
 		break;
-	case 0xbd: /* LDA abs,X */
+	case 0xbd: /* LDA abs,x */
 		// printf("lda abs,x\n");
 		cpu->ac = mem[fetch_word(cpu) + cpu->xr];
 		set_nz_flags(cpu, cpu->ac);
@@ -351,7 +359,7 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0xc0: /* CPY # */
 		set_cmp_flags(cpu, cpu->yr, fetch_byte(cpu));
 		break;
-	case 0xc1: /* CMP (zp, X) */
+	case 0xc1: /* CMP (zp,x) */
 		zp = fetch_byte(cpu);
 		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
 		set_cmp_flags(cpu, cpu->ac, mem[address]);
@@ -368,7 +376,7 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0xe0: /* CPX # */
 		set_cmp_flags(cpu, cpu->xr, fetch_byte(cpu));
 		break;
-	case 0xe1: /* SBC (zp, X) */
+	case 0xe1: /* SBC (zp,x) */
 		zp = fetch_byte(cpu);
 		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
 		cpu->ac = sbc(cpu, cpu->ac, mem[address]);
