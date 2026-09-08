@@ -669,6 +669,22 @@ void test_ldx_imm(void)
 	TEST_CHECK((cpu.sr) == negative_flag);
 }
 
+void test_ldy_zp(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.yr = 0x5a;
+	mem[0x10] = 0x80;
+	mem[0x100] = 0xa4; /* ldy $10 */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == negative_flag);
+	TEST_CHECK(cpu.yr == 0x80);
+}
+
 void test_bcs(void)
 {
 	CPU_CTX cpu;
@@ -702,6 +718,23 @@ void test_lda_zp_y_ind(void)
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK((cpu.sr) == zero_flag);
 	TEST_CHECK(cpu.ac == 0x0);
+}
+
+void test_ldy_zp_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.yr = 0x5a;
+	cpu.xr = 0x20;
+	mem[0x30] = 0x0;
+	mem[0x100] = 0xb4; /* ldy $10,x */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == zero_flag);
+	TEST_CHECK(cpu.yr == 0x0);
 }
 
 void test_cpy_imm(void)
@@ -906,8 +939,10 @@ TEST_LIST = {
 	{"ldy #", test_ldy_imm},
 	{"lda (zp,x)", test_lda_zp_x_ind},
 	{"ldx #", test_ldx_imm},
+	{"ldy zp", test_ldy_zp},
 	{"bcs", test_bcs},
 	{"lda (zp),y", test_lda_zp_y_ind},
+	{"ldy zp,x", test_ldy_zp_x},
 	{"cpy #", test_cpy_imm},
 	{"cmp (zp,x)", test_cmp_zp_x_ind},
 	{"bne", test_bne},

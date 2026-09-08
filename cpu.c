@@ -336,6 +336,10 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->xr = fetch_byte(cpu);
 		set_nz_flags(cpu, cpu->xr);
 		break;
+	case 0xa4: /* LDY zp */
+		cpu->yr = mem[fetch_byte(cpu)];
+		set_nz_flags(cpu, cpu->yr);
+		break;
 	case 0xa9: /* LDA # */
 		// printf("lda\n");
 		cpu->ac = fetch_byte(cpu);
@@ -350,6 +354,11 @@ void execute_instruction(CPU_CTX *cpu)
 		address = mem[zp] + (0x100 * mem[zp + 1]) + cpu->yr;
 		cpu->ac = mem[address];
 		set_nz_flags(cpu, cpu->ac);
+		break;
+	case 0xb4: /* LDY zp,x */
+		address = fetch_byte(cpu) + cpu->xr;
+		cpu->yr = mem[address];
+		set_nz_flags(cpu, cpu->yr);
 		break;
 	case 0xbd: /* LDA abs,x */
 		// printf("lda abs,x\n");
