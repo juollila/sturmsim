@@ -157,6 +157,18 @@ u8 sbc(CPU_CTX *cpu, u8 i, u8 j)
 	return r;
 }
 
+static u8 asl(CPU_CTX *cpu, u8 i)
+{
+	if ((i & 0x80) == 0x80) {
+		cpu->sr |= carry_flag;
+	} else {
+	}
+		cpu->sr |= carry_flag;
+	u8 r = i << 1;
+	set_nz_flags(cpu, r);
+	return r;
+}
+
 static void print_registers(CPU_CTX *cpu)
 {
 	printf("   PC   SR AC XR YR SP\n");
@@ -226,6 +238,10 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = cpu->ac | mem[fetch_byte(cpu)];
 		set_nz_flags(cpu, cpu->ac);
 		break;
+	case 0x6: /* ASL zp */
+		zp = fetch_byte(cpu);
+		mem[zp] = asl(cpu, mem[zp]);
+		break;
 	case 0x10: /* BPL rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & negative_flag) != negative_flag) cpu->pc = cpu->pc + offset;
@@ -239,6 +255,10 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x15: /* ORA zp,x */
 		cpu->ac = cpu->ac | mem[fetch_byte(cpu) + cpu->xr];
 		set_nz_flags(cpu, cpu->ac);
+		break;
+	case 0x16: /* ASL zp,x */
+		zp = fetch_byte(cpu);
+		mem[zp + cpu->xr] = asl(cpu, mem[zp + cpu->xr]);
 		break;
 	case 0x20: /* JSR abs */
 		push_word(cpu, cpu->pc + 1);

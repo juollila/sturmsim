@@ -60,6 +60,7 @@ void set_nz_flags(CPU_CTX *cpu, u8 i);
 void set_cmp_flags(CPU_CTX *cpu, u8 i, u8 j);
 u8 adc(CPU_CTX *cpu, u8 i, u8 j);
 u8 sbc(CPU_CTX *cpu, u8 i, u8 j);
+static u8 asl(CPU_CTX *cpu, u8 i);
 static void print_registers(CPU_CTX *cpu);
 void execute_instruction(CPU_CTX *cpu);
 void execute_program(CPU_CTX *cpu);

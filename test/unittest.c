@@ -246,6 +246,22 @@ void test_ora_zp(void)
 	TEST_CHECK(cpu.ac == 0x22);
 }
 
+void test_asl_zp(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x10] = 0x80;
+	mem[0x100] = 0x6; /* asl $10 */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == (carry_flag | zero_flag));
+	TEST_CHECK(mem[0x10] == 0x0);
+}
+
+
 void test_bpl(void)
 {
 	CPU_CTX cpu;
@@ -299,6 +315,22 @@ void test_ora_zp_x(void)
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x88);
+}
+
+void test_asl_zp_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.xr = 0x10;
+	mem[0x20] = 0xc0;
+	mem[0x100] = 0x16; /* asl $10 */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == (carry_flag | negative_flag));
+	TEST_CHECK(mem[0x20] == 0x80);
 }
 
 void test_jsr(void)
@@ -1211,9 +1243,11 @@ TEST_LIST = {
 	{"brk", test_brk}, 			// 0x0
 	{"ora (zp,x)", test_ora_zp_x_ind},	// 0x1
 	{"ora zp", test_ora_zp},		// 0x5
+	{"asl zp", test_asl_zp},		// 0x6
 	{"bpl", test_bpl},			// 0x10
 	{"ora (zp),y", test_ora_zp_y_ind},	// 0x11
 	{"ora zp,x", test_ora_zp_x},		// 0x15
+	{"asl zp,x", test_asl_zp_x},		// 0x16
 	{"jsr", test_jsr},			// 0x20
 	{"and (zp,x)", test_and_zp_x_ind},	// 0x21
 	{"bit zp", test_bit_zp},		// 0x24
