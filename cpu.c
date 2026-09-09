@@ -313,6 +313,9 @@ void execute_instruction(CPU_CTX *cpu)
 		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
 		cpu->ac = adc(cpu, cpu->ac, mem[address]);
 		break;
+	case 0x65: /* ADC zp */
+		cpu->ac = adc(cpu, cpu->ac, mem[fetch_byte(cpu)]);
+		break;
 	case 0x70: /* BVS rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & overflow_flag) == overflow_flag) cpu->pc = cpu->pc + offset;
@@ -321,6 +324,9 @@ void execute_instruction(CPU_CTX *cpu)
 		zp = fetch_byte(cpu);
 		address = mem[zp] + (0x100 * mem[zp + 1]) + cpu->yr;
 		cpu->ac = adc(cpu, cpu->ac, mem[address]);
+		break;
+	case 0x75: /* ADC zp,x */
+		cpu->ac = adc(cpu, cpu->ac, mem[fetch_byte(cpu) + cpu->xr]);
 		break;
 	case 0x81: /* STA (zp, x) */
 		zp = fetch_byte(cpu);

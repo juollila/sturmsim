@@ -568,6 +568,22 @@ void test_adc_zp_x_ind(void)
 	TEST_CHECK((cpu.ac) == 0x65);
 }
 
+void test_adc_zp(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.ac = 0x18;
+	mem[0x10] = 0x80;
+	mem[0x100] = 0x65; /* adc $10 */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = carry_flag;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == negative_flag);
+	TEST_CHECK(cpu.ac == 0x99);
+}
+
 void test_bvs(void)
 {
 	CPU_CTX cpu;
@@ -602,6 +618,23 @@ void test_adc_zp_y_ind(void)
 	TEST_CHECK(cpu.yr == 0x10);
 	TEST_CHECK((cpu.sr) == carry_flag);
 	TEST_CHECK((cpu.ac) == 0x45);
+}
+
+void test_adc_zp_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.ac = 0x88;
+	cpu.xr = 0x10;
+	mem[0x20] = 0x80;
+	mem[0x100] = 0x75; /* adc $10,x */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == (carry_flag | overflow_flag));
+	TEST_CHECK(cpu.ac == 0x8);
 }
 
 void test_sta_zp_x_ind(void)
@@ -1066,8 +1099,10 @@ TEST_LIST = {
 	{"eor zp,x", test_eor_zp_x},		// 0x55
 	{"rts", test_rts},			// 0x60
 	{"adc (zp,x)", test_adc_zp_x_ind},	// 0x61	
+	{"adc zp", test_adc_zp},		// 0x65
 	{"bvs", test_bvs},			// 0x70
 	{"adc (zp),y", test_adc_zp_y_ind},	// 0x71
+	{"adc zp,x", test_adc_zp_x},		// 0x75
 	{"sta (zp,x)", test_sta_zp_x_ind},	// 0x81
 	{"sty zp", test_sty_zp},		// 0x84
 	{"bcc", test_bcc},			// 0x90
