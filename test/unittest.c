@@ -671,6 +671,21 @@ void test_sty_zp(void)
 	TEST_CHECK(mem[0x10] == 0x5a);
 }
 
+void test_sta_zp(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.ac = 0x18;
+	mem[0x100] = 0x85; /* sta $10 */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == 0);
+	TEST_CHECK(mem[0x10] == 0x18);
+}
+
 void test_bcc(void)
 {
 	CPU_CTX cpu;
@@ -720,6 +735,22 @@ void test_sty_zp_x(void)
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK((cpu.sr) == 0x0);
 	TEST_CHECK(mem[0x20] == 0x5a);
+}
+
+void test_sta_zp_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.ac = 0x88;
+	cpu.xr = 0x10;
+	mem[0x100] = 0x95; /* sta $10,x */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == 0);
+	TEST_CHECK(mem[0x20] == 0x88);
 }
 
 void test_ldy_imm(void)
@@ -817,6 +848,22 @@ void test_ldy_zp(void)
 	TEST_CHECK(cpu.yr == 0x80);
 }
 
+void test_lda_zp(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.ac = 0x18;
+	mem[0x10] = 0x80;
+	mem[0x100] = 0xa5; /* lda $10 */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == negative_flag);
+	TEST_CHECK(cpu.ac == 0x80);
+}
+
 void test_bcs(void)
 {
 	CPU_CTX cpu;
@@ -867,6 +914,23 @@ void test_ldy_zp_x(void)
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == zero_flag);
 	TEST_CHECK(cpu.yr == 0x0);
+}
+
+void test_lda_zp_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.ac = 0x88;
+	cpu.xr = 0x10;
+	mem[0x20] = 0x64;
+	mem[0x100] = 0xb5; /* lda $10,x */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == 0);
+	TEST_CHECK(cpu.ac == 0x64);
 }
 
 void test_cpy_imm(void)
@@ -1105,16 +1169,20 @@ TEST_LIST = {
 	{"adc zp,x", test_adc_zp_x},		// 0x75
 	{"sta (zp,x)", test_sta_zp_x_ind},	// 0x81
 	{"sty zp", test_sty_zp},		// 0x84
+	{"sta zp", test_sta_zp},		// 0x85
 	{"bcc", test_bcc},			// 0x90
 	{"sta (zp),y", test_sta_zp_y_ind},	// 0x91
 	{"sty zp,x", test_sty_zp_x},		// 0x94
+	{"sta zp,x", test_sta_zp_x},		// 0x95
 	{"ldy #", test_ldy_imm},		// 0xa0
 	{"lda (zp,x)", test_lda_zp_x_ind},	// 0xa1
 	{"ldx #", test_ldx_imm},		// 0xa2
 	{"ldy zp", test_ldy_zp},		// 0xa4
+	{"lda zp", test_lda_zp},		// 0xa5
 	{"bcs", test_bcs},			// 0xb0
 	{"lda (zp),y", test_lda_zp_y_ind},	// 0xb1
 	{"ldy zp,x", test_ldy_zp_x},		// 0xb4
+	{"lda zp,x", test_lda_zp_x},		// 0xb5
 	{"cpy #", test_cpy_imm},		// 0xc0
 	{"cmp (zp,x)", test_cmp_zp_x_ind},	// 0xc1
 	{"cpy zp", test_cpy_zp},		// 0xc4
