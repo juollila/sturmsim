@@ -999,6 +999,22 @@ void test_cpy_zp(void)
 	TEST_CHECK(cpu.yr == 0x5a);
 }
 
+void test_cmp_zp(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.ac = 0x18;
+	mem[0x10] = 0x80;
+	mem[0x100] = 0xc5; /* cmp $10 */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == negative_flag);
+	TEST_CHECK(cpu.ac == 0x18);
+}
+
 void test_bne(void)
 {
 	CPU_CTX cpu;
@@ -1032,6 +1048,23 @@ void test_cmp_zp_y_ind(void)
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK((cpu.sr) == carry_flag);
 	TEST_CHECK(cpu.ac == 0x55);
+}
+
+void test_cmp_zp_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.ac = 0x88;
+	cpu.xr = 0x10;
+	mem[0x20] = 0x64;
+	mem[0x100] = 0xd5; /* cmp $10,x */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == carry_flag);
+	TEST_CHECK(cpu.ac == 0x88);
 }
 
 void test_cpx_imm(void)
@@ -1101,6 +1134,22 @@ void test_cpx_zp(void)
 	TEST_CHECK(cpu.xr == 0x20);
 }
 
+void test_sbc_zp(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.ac = 0x18;
+	mem[0x10] = 0x80;
+	mem[0x100] = 0xe5; /* sbc $10 */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = carry_flag;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == (negative_flag | overflow_flag));
+	TEST_CHECK(cpu.ac == 0x98);
+}
+
 void test_beq(void)
 {
 	CPU_CTX cpu;
@@ -1134,6 +1183,23 @@ void test_sbc_zp_y_ind(void)
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK((cpu.sr) == carry_flag);
 	TEST_CHECK(cpu.ac == 0x54);
+}
+
+void test_sbc_zp_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.ac = 0x88;
+	cpu.xr = 0x10;
+	mem[0x20] = 0x64;
+	mem[0x100] = 0xf5; /* sbc $10,x */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = carry_flag;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == (carry_flag | overflow_flag));
+	TEST_CHECK(cpu.ac == 0x24);
 }
 
 TEST_LIST = {
@@ -1186,12 +1252,16 @@ TEST_LIST = {
 	{"cpy #", test_cpy_imm},		// 0xc0
 	{"cmp (zp,x)", test_cmp_zp_x_ind},	// 0xc1
 	{"cpy zp", test_cpy_zp},		// 0xc4
+	{"cmp zp", test_cmp_zp},		// 0xc5
 	{"bne", test_bne},			// 0xd0
 	{"cmp (zp),y", test_cmp_zp_y_ind},	// 0xd1
+	{"cmp zp,x", test_cmp_zp_x},		// 0xd5
 	{"cpx #", test_cpx_imm},		// 0xe0
 	{"sbc (zp,x)", test_sbc_zp_x_ind},	// 0xe1
 	{"cpx zp", test_cpx_zp},		// 0xe4
+	{"sbc zp", test_sbc_zp},		// 0xe5
 	{"beq", test_beq},			// 0xf0
 	{"sbc (zp),y", test_sbc_zp_y_ind},	// 0xf1
+	{"sbc zp,x", test_sbc_zp_x},		// 0xf5
 	{ NULL, NULL }
 };

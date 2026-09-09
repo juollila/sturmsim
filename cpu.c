@@ -419,6 +419,9 @@ void execute_instruction(CPU_CTX *cpu)
 		address = mem[zp+cpu->xr] + (0x100 * mem[zp + cpu->xr + 1]);
 		set_cmp_flags(cpu, cpu->ac, mem[address]);
 		break;
+	case 0xc5: /* CMP zp */
+		set_cmp_flags(cpu, cpu->ac, mem[fetch_byte(cpu)]);
+		break;
 	case 0xd0: /* BNE */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & zero_flag) != zero_flag) cpu->pc = cpu->pc + offset;
@@ -427,6 +430,9 @@ void execute_instruction(CPU_CTX *cpu)
 		zp = fetch_byte(cpu);
 		address = mem[zp] + (0x100 * mem[zp + 1]) + cpu->yr;
 		set_cmp_flags(cpu, cpu->ac, mem[address]);
+		break;
+	case 0xd5: /* CMP zp,x */
+		set_cmp_flags(cpu, cpu->ac, mem[fetch_byte(cpu) + cpu->xr]);
 		break;
 	case 0xe0: /* CPX # */
 		set_cmp_flags(cpu, cpu->xr, fetch_byte(cpu));
@@ -438,6 +444,9 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0xe4: /* CPX zp */
 		set_cmp_flags(cpu, cpu->xr, mem[fetch_byte(cpu)]);
+		break;
+	case 0xe5: /* SBC zp */
+		cpu->ac = sbc(cpu, cpu->ac, mem[fetch_byte(cpu)]);
 		break;
 	case 0xe8: /* INX */
 		cpu->xr = cpu->xr + 1;
@@ -452,6 +461,10 @@ void execute_instruction(CPU_CTX *cpu)
 		address = mem[zp] + (0x100 * mem[zp + 1]) + cpu->yr;
 		cpu->ac = sbc(cpu, cpu->ac, mem[address]);
 		break;
+	case 0xf5: /* SBC zp,x */
+		cpu->ac = sbc(cpu, cpu->ac, mem[fetch_byte(cpu) + cpu->xr]);
+		break;
+
 	default:
 		printf("Not implemented instruction\n");
 		cpu->halt = true;
