@@ -422,6 +422,9 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x85: /* STA zp */
 		mem[fetch_byte(cpu)] = cpu->ac;
 		break;
+	case 0x86: /* STX zp */
+		mem[fetch_byte(cpu)] = cpu->xr;
+		break;
 	case 0x90: /* BCC rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & carry_flag) != carry_flag) cpu->pc = cpu->pc + offset;
@@ -432,11 +435,13 @@ void execute_instruction(CPU_CTX *cpu)
 		mem[address] = cpu->ac;
 		break;
 	case 0x94: /* STY zp,x */
-		address = fetch_byte(cpu) + cpu->xr;
-		mem[address] = cpu->yr;
+		mem[fetch_byte(cpu) + cpu->xr] = cpu->yr;
 		break;
 	case 0x95: /* STA zp,x */
 		mem[fetch_byte(cpu) + cpu->xr] = cpu->ac;
+		break;
+	case 0x96: /* STX zp,y */
+		mem[fetch_byte(cpu) + cpu->yr] = cpu->xr;
 		break;
 	case 0xa0: /* LDY # */
 		// printf("ldy\n");
