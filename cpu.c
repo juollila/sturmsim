@@ -162,9 +162,23 @@ static u8 asl(CPU_CTX *cpu, u8 i)
 	if ((i & 0x80) == 0x80) {
 		cpu->sr |= carry_flag;
 	} else {
+		cpu->sr &= (~carry_flag);
 	}
-		cpu->sr |= carry_flag;
 	u8 r = i << 1;
+	set_nz_flags(cpu, r);
+	return r;
+}
+
+static u8 rol(CPU_CTX *cpu, u8 i)
+{	u8 r = i << 1;
+	if ((cpu->sr & carry_flag) == carry_flag) {
+		r |= 0x1;
+	}
+	if ((i & 0x80) == 0x80) {
+		cpu->sr |= carry_flag;
+	} else {
+		cpu->sr &= (~carry_flag);
+	}
 	set_nz_flags(cpu, r);
 	return r;
 }
@@ -281,6 +295,10 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = cpu->ac & mem[fetch_byte(cpu)];
 		set_nz_flags(cpu, cpu->ac);
 		break;
+	case 0x26: /* ROL zp */
+		zp = fetch_byte(cpu);
+		mem[zp] = rol(cpu, mem[zp]);
+		break;
 	case 0x30: /* BMI rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & negative_flag) == negative_flag) cpu->pc = cpu->pc + offset;
@@ -294,6 +312,10 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x35: /* AND zp,x */
 		cpu->ac = cpu->ac & mem[fetch_byte(cpu) + cpu->xr];
 		set_nz_flags(cpu, cpu->ac);
+		break;
+	case 0x36: /* ROL zp,x */
+		zp = fetch_byte(cpu);
+		mem[zp + cpu->xr] = rol(cpu, mem[zp + cpu->xr]);
 		break;
 	case 0x40: /* RTI */
 		cpu->sr = pull_byte(cpu);

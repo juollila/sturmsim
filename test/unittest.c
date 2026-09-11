@@ -322,14 +322,14 @@ void test_asl_zp_x(void)
 	CPU_CTX cpu;
 	init_cpu(&cpu);
 	cpu.xr = 0x10;
-	mem[0x20] = 0xc0;
-	mem[0x100] = 0x16; /* asl $10 */
+	mem[0x20] = 0x40;
+	mem[0x100] = 0x16; /* asl $10,x */
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
 	execute_instruction(&cpu);
 	TEST_CHECK(cpu.pc == 0x102);
-	TEST_CHECK(cpu.sr == (carry_flag | negative_flag));
+	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(mem[0x20] == 0x80);
 }
 
@@ -408,6 +408,21 @@ void test_and_zp(void)
 	TEST_CHECK(cpu.ac == 0x0);
 }
 
+void test_rol_zp(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x10] = 0x81;
+	mem[0x100] = 0x26; /* rol $10 */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == carry_flag);
+	TEST_CHECK(mem[0x10] == 0x2);
+}
+
 void test_bmi(void)
 {
 	CPU_CTX cpu;
@@ -459,6 +474,23 @@ void test_and_zp_x(void)
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x80);
+}
+
+
+void test_rol_zp_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.xr = 0x10;
+	mem[0x20] = 0x40;
+	mem[0x100] = 0x36; /* rol $10,x */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = carry_flag;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == negative_flag);
+	TEST_CHECK(mem[0x20] == 0x81);
 }
 
 void test_rti(void)
@@ -1252,9 +1284,11 @@ TEST_LIST = {
 	{"and (zp,x)", test_and_zp_x_ind},	// 0x21
 	{"bit zp", test_bit_zp},		// 0x24
 	{"and zp", test_and_zp},		// 0x25
+	{"rol zp", test_rol_zp},		// 0x26
 	{"bmi", test_bmi},			// 0x30
 	{"and (zp),y", test_and_zp_y_ind},	// 0x31
 	{"and zp,x", test_and_zp_x},		// 0x35
+	{"rol zp,x", test_rol_zp_x},		// 0x36
 	{"rti", test_rti},			// 0x40
 	{"eor (zp,x)", test_eor_zp_x_ind},	// 0x41
 	{"eor zp", test_eor_zp},		// 0x45
