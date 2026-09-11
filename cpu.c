@@ -554,6 +554,11 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0xe5: /* SBC zp */
 		cpu->ac = sbc(cpu, cpu->ac, mem[fetch_byte(cpu)]);
 		break;
+	case 0xe6: /* INC zp */
+		zp = fetch_byte(cpu);
+		mem[zp] = mem[zp] + 1;
+		set_nz_flags(cpu, mem[zp]);
+		break;
 	case 0xe8: /* INX */
 		cpu->xr = cpu->xr + 1;
 		set_nz_flags(cpu, cpu->xr);
@@ -569,6 +574,11 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0xf5: /* SBC zp,x */
 		cpu->ac = sbc(cpu, cpu->ac, mem[fetch_byte(cpu) + cpu->xr]);
+		break;
+	case 0xf6: /* INC zp,x */
+		zp = fetch_byte(cpu) + cpu->xr;
+		mem[zp] = mem[zp] + 1;
+		set_nz_flags(cpu, mem[zp]);
 		break;
 
 	default:

@@ -1369,6 +1369,21 @@ void test_sbc_zp(void)
 	TEST_CHECK(cpu.ac == 0x98);
 }
 
+void test_inc_zp(void)
+{
+        CPU_CTX cpu;
+        init_cpu(&cpu);
+        mem[0x100] = 0xe6; /* inc $10 */
+        mem[0x101] = 0x10;
+        mem[0x10] = 0x7f;
+        cpu.pc = 0x100;
+        cpu.sr = 0;
+        execute_instruction(&cpu);
+        TEST_CHECK(cpu.pc == 0x102);
+        TEST_CHECK(cpu.sr == negative_flag);
+        TEST_CHECK(mem[0x10] == 0x80);
+}    
+
 void test_beq(void)
 {
 	CPU_CTX cpu;
@@ -1419,6 +1434,22 @@ void test_sbc_zp_x(void)
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == (carry_flag | overflow_flag));
 	TEST_CHECK(cpu.ac == 0x24);
+}
+
+void test_inc_zp_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.xr = 0x10;
+	mem[0x20] = 0xff;
+	mem[0x100] = 0xf6; /* inc $10,x */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == zero_flag);
+	TEST_CHECK(mem[0x20] == 0x0);
 }
 
 TEST_LIST = {
@@ -1493,8 +1524,10 @@ TEST_LIST = {
 	{"sbc (zp,x)", test_sbc_zp_x_ind},	// 0xe1
 	{"cpx zp", test_cpx_zp},		// 0xe4
 	{"sbc zp", test_sbc_zp},		// 0xe5
+	{"inc zp", test_inc_zp},		// 0xe6
 	{"beq", test_beq},			// 0xf0
 	{"sbc (zp),y", test_sbc_zp_y_ind},	// 0xf1
 	{"sbc zp,x", test_sbc_zp_x},		// 0xf5
+	{"inc zp,x", test_inc_zp_x},		// 0xf6
 	{ NULL, NULL }
 };
