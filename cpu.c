@@ -518,6 +518,11 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0xc5: /* CMP zp */
 		set_cmp_flags(cpu, cpu->ac, mem[fetch_byte(cpu)]);
 		break;
+	case 0xc6: /* DEC zp */
+		zp = fetch_byte(cpu);
+		mem[zp] = mem[zp] - 1;
+		set_nz_flags(cpu, mem[zp]);
+		break;
 	case 0xd0: /* BNE */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & zero_flag) != zero_flag) cpu->pc = cpu->pc + offset;
@@ -529,6 +534,11 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0xd5: /* CMP zp,x */
 		set_cmp_flags(cpu, cpu->ac, mem[fetch_byte(cpu) + cpu->xr]);
+		break;
+	case 0xd6: /* DEC zp,x */
+		zp = fetch_byte(cpu) + cpu->xr;
+		mem[zp] = mem[zp] - 1;
+		set_nz_flags(cpu, mem[zp]);
 		break;
 	case 0xe0: /* CPX # */
 		set_cmp_flags(cpu, cpu->xr, fetch_byte(cpu));
