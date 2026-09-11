@@ -183,6 +183,17 @@ static u8 rol(CPU_CTX *cpu, u8 i)
 	return r;
 }
 
+static u8 lsr(CPU_CTX *cpu, u8 i)
+{	u8 r = i >> 1;
+	if ((i & 0x1) == 0x1) {
+		cpu->sr |= carry_flag;
+	} else {
+		cpu->sr &= (~carry_flag);
+	}
+	set_nz_flags(cpu, r);
+	return r;
+}
+
 static void print_registers(CPU_CTX *cpu)
 {
 	printf("   PC   SR AC XR YR SP\n");
@@ -332,6 +343,10 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = cpu->ac ^ mem[fetch_byte(cpu)];
 		set_nz_flags(cpu, cpu->ac);
 		break;
+	case 0x46: /* LSR zp */
+		zp = fetch_byte(cpu);
+		mem[zp] = lsr(cpu, mem[zp]);
+		break;
 	case 0x50: /* BVC rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & overflow_flag) != overflow_flag) cpu->pc = cpu->pc + offset;
@@ -345,6 +360,10 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x55: /* EOR zp,x */
 		cpu->ac = cpu->ac ^ mem[fetch_byte(cpu) + cpu->xr];
 		set_nz_flags(cpu, cpu->ac);
+		break;
+	case 0x56: /* LSR zp,x */
+		zp = fetch_byte(cpu);
+		mem[zp + cpu->xr] = lsr(cpu, mem[zp + cpu->xr]);
 		break;
 	case 0x60: /* RTS */
 		// printf("rts\n");
