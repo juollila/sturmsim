@@ -194,6 +194,20 @@ static u8 lsr(CPU_CTX *cpu, u8 i)
 	return r;
 }
 
+static u8 ror(CPU_CTX *cpu, u8 i)
+{	u8 r = i >> 1;
+	if ((cpu->sr & carry_flag) == carry_flag) {
+		r |= 0x80;
+	}
+	if ((i & 0x1) == 0x1) {
+		cpu->sr |= carry_flag;
+	} else {
+		cpu->sr &= (~carry_flag);
+	}
+	set_nz_flags(cpu, r);
+	return r;
+}
+
 static void print_registers(CPU_CTX *cpu)
 {
 	printf("   PC   SR AC XR YR SP\n");
@@ -377,6 +391,10 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x65: /* ADC zp */
 		cpu->ac = adc(cpu, cpu->ac, mem[fetch_byte(cpu)]);
 		break;
+	case 0x66: /* ROR zp */
+		zp = fetch_byte(cpu);
+		mem[zp] = ror(cpu, mem[zp]);
+		break;
 	case 0x70: /* BVS rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & overflow_flag) == overflow_flag) cpu->pc = cpu->pc + offset;
@@ -388,6 +406,10 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0x75: /* ADC zp,x */
 		cpu->ac = adc(cpu, cpu->ac, mem[fetch_byte(cpu) + cpu->xr]);
+		break;
+	case 0x76: /* ROR zp,x */
+		zp = fetch_byte(cpu);
+		mem[zp + cpu->xr] = ror(cpu, mem[zp + cpu->xr]);
 		break;
 	case 0x81: /* STA (zp, x) */
 		zp = fetch_byte(cpu);

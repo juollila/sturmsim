@@ -620,7 +620,7 @@ void test_lsr_zp_x(void)
 	init_cpu(&cpu);
 	cpu.xr = 0x10;
 	mem[0x20] = 0x40;
-	mem[0x100] = 0x56; /* rol $10,x */
+	mem[0x100] = 0x56; /* lsr $10,x */
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = carry_flag;
@@ -679,6 +679,21 @@ void test_adc_zp(void)
 	TEST_CHECK(cpu.ac == 0x99);
 }
 
+void test_ror_zp(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x10] = 0x81;
+	mem[0x100] = 0x66; /* ror $10 */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = carry_flag;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == (negative_flag | carry_flag));
+	TEST_CHECK(mem[0x10] == 0xc0);
+}
+
 void test_bvs(void)
 {
 	CPU_CTX cpu;
@@ -730,6 +745,22 @@ void test_adc_zp_x(void)
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == (carry_flag | overflow_flag));
 	TEST_CHECK(cpu.ac == 0x8);
+}
+
+void test_ror_zp_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.xr = 0x10;
+	mem[0x20] = 0x0;
+	mem[0x100] = 0x76; /* ror $10,x */
+	mem[0x101] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == zero_flag);
+	TEST_CHECK(mem[0x20] == 0x0);
 }
 
 void test_sta_zp_x_ind(void)
@@ -1331,9 +1362,11 @@ TEST_LIST = {
 	{"rts", test_rts},			// 0x60
 	{"adc (zp,x)", test_adc_zp_x_ind},	// 0x61	
 	{"adc zp", test_adc_zp},		// 0x65
+	{"ror zp", test_ror_zp},		// 0x66
 	{"bvs", test_bvs},			// 0x70
 	{"adc (zp),y", test_adc_zp_y_ind},	// 0x71
 	{"adc zp,x", test_adc_zp_x},		// 0x75
+	{"ror zp,x", test_ror_zp_x},		// 0x76
 	{"sta (zp,x)", test_sta_zp_x_ind},	// 0x81
 	{"sty zp", test_sty_zp},		// 0x84
 	{"sta zp", test_sta_zp},		// 0x85
