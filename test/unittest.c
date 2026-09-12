@@ -930,6 +930,20 @@ void test_stx_zp(void)
 	TEST_CHECK(mem[0x10] == 0x81);
 }
 
+void test_dey(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x88; /* dey */
+	cpu.pc = 0x100;
+	cpu.sr = 0;
+	cpu.yr = 0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sr == negative_flag);
+	TEST_CHECK(cpu.yr == 0xff);
+}
+
 void test_bcc(void)
 {
 	CPU_CTX cpu;
@@ -1011,6 +1025,21 @@ void test_stx_zp_y(void)
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(mem[0x20] == 0x64);
+}
+
+void test_tya(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x98; /* tya */
+	cpu.pc = 0x100;
+	cpu.sr = 0;
+	cpu.yr = 0;
+	cpu.ac = 0x80;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sr == zero_flag);
+	TEST_CHECK(cpu.ac == 0x0);
 }
 
 void test_ldy_imm(void)
@@ -1137,6 +1166,21 @@ void test_ldx_zp(void)
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.xr == 0x81);
+}
+
+void test_tay(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xa8; /* tay */
+	cpu.pc = 0x100;
+	cpu.sr = 0;
+	cpu.yr = 0;
+	cpu.ac = 0x80;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sr == negative_flag);
+	TEST_CHECK(cpu.yr == 0x80);
 }
 
 void test_bcs(void)
@@ -1606,17 +1650,20 @@ TEST_LIST = {
 	{"sty zp", test_sty_zp},		// 0x84
 	{"sta zp", test_sta_zp},		// 0x85
 	{"stx zp", test_stx_zp},		// 0x86
+	{"dey", test_dey}, 			// 0x88
 	{"bcc", test_bcc},			// 0x90
 	{"sta (zp),y", test_sta_zp_y_ind},	// 0x91
 	{"sty zp,x", test_sty_zp_x},		// 0x94
 	{"sta zp,x", test_sta_zp_x},		// 0x95
 	{"stx zp,y", test_stx_zp_y},		// 0x96
+	{"tya", test_tya}, 			// 0x98
 	{"ldy #", test_ldy_imm},		// 0xa0
 	{"lda (zp,x)", test_lda_zp_x_ind},	// 0xa1
 	{"ldx #", test_ldx_imm},		// 0xa2
 	{"ldy zp", test_ldy_zp},		// 0xa4
 	{"lda zp", test_lda_zp},		// 0xa5
 	{"ldx zp", test_ldx_zp},		// 0xa6
+	{"tay", test_tay}, 			// 0xa8
 	{"bcs", test_bcs},			// 0xb0
 	{"lda (zp),y", test_lda_zp_y_ind},	// 0xb1
 	{"ldy zp,x", test_ldy_zp_x},		// 0xb4

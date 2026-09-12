@@ -450,6 +450,10 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x86: /* STX zp */
 		mem[fetch_byte(cpu)] = cpu->xr;
 		break;
+	case 0x88: /* DEY */
+		cpu->yr = cpu->yr - 1;
+		set_nz_flags(cpu, cpu->yr);
+		break;
 	case 0x90: /* BCC rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & carry_flag) != carry_flag) cpu->pc = cpu->pc + offset;
@@ -467,6 +471,10 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0x96: /* STX zp,y */
 		mem[fetch_byte(cpu) + cpu->yr] = cpu->xr;
+		break;
+	case 0x98: /* TYA */
+		cpu->ac = cpu->yr;
+		set_nz_flags(cpu, cpu->ac);
 		break;
 	case 0xa0: /* LDY # */
 		// printf("ldy\n");
@@ -495,6 +503,10 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0xa6: /* LDX zp */
 		cpu->xr = mem[fetch_byte(cpu)];
 		set_nz_flags(cpu, cpu->xr);
+		break;
+	case 0xa8: /* TAY */
+		cpu->yr = cpu->ac;
+		set_nz_flags(cpu, cpu->yr);
 		break;
 	case 0xa9: /* LDA # */
 		// printf("lda\n");
