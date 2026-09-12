@@ -13,7 +13,7 @@ void init_cpu(CPU_CTX *cpu)
 	cpu->xr = 0;
 	cpu->yr = 0;
 	cpu->sp = 0xff;
-	cpu->sr = one_flag;
+	cpu->sr = 0;
 	cpu->pc = 0x0;
 	cpu->halt = false;
 }
@@ -330,6 +330,9 @@ void execute_instruction(CPU_CTX *cpu)
 		zp = fetch_byte(cpu);
 		mem[zp] = rol(cpu, mem[zp]);
 		break;
+	case 0x28: /* PLP */
+		cpu->sr = pull_byte(cpu);
+		break;
 	case 0x30: /* BMI rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & negative_flag) == negative_flag) cpu->pc = cpu->pc + offset;
@@ -347,6 +350,9 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x36: /* ROL zp,x */
 		zp = fetch_byte(cpu);
 		mem[zp + cpu->xr] = rol(cpu, mem[zp + cpu->xr]);
+		break;
+	case 0x38: /* SEC */
+		cpu->sr |= carry_flag;
 		break;
 	case 0x40: /* RTI */
 		cpu->sr = pull_byte(cpu);
@@ -367,6 +373,9 @@ void execute_instruction(CPU_CTX *cpu)
 		zp = fetch_byte(cpu);
 		mem[zp] = lsr(cpu, mem[zp]);
 		break;
+	case 0x48: /* PHA */
+		push_byte(cpu, cpu->ac);
+		break;
 	case 0x50: /* BVC rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & overflow_flag) != overflow_flag) cpu->pc = cpu->pc + offset;
@@ -385,6 +394,9 @@ void execute_instruction(CPU_CTX *cpu)
 		zp = fetch_byte(cpu);
 		mem[zp + cpu->xr] = lsr(cpu, mem[zp + cpu->xr]);
 		break;
+	case 0x58: /* CLI */
+		cpu->sr &= (~interrupt_flag);
+		break;
 	case 0x60: /* RTS */
 		// printf("rts\n");
 		cpu->pc = pull_word(cpu) + 1;
@@ -401,6 +413,10 @@ void execute_instruction(CPU_CTX *cpu)
 		zp = fetch_byte(cpu);
 		mem[zp] = ror(cpu, mem[zp]);
 		break;
+	case 0x68: /* PLA */
+		cpu->ac = pull_byte(cpu);
+		set_nz_flags(cpu, cpu->ac);
+		break;
 	case 0x70: /* BVS rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & overflow_flag) == overflow_flag) cpu->pc = cpu->pc + offset;
@@ -416,6 +432,9 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x76: /* ROR zp,x */
 		zp = fetch_byte(cpu);
 		mem[zp + cpu->xr] = ror(cpu, mem[zp + cpu->xr]);
+		break;
+	case 0x78: /* SEI */
+		cpu->sr |= interrupt_flag;
 		break;
 	case 0x81: /* STA (zp, x) */
 		zp = fetch_byte(cpu);

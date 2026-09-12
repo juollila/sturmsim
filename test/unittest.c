@@ -445,6 +445,20 @@ void test_rol_zp(void)
 	TEST_CHECK(mem[0x10] == 0x2);
 }
 
+void test_plp(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x28; /* plp */
+	cpu.pc = 0x100;
+	cpu.sp = 0xfe;
+	mem[0x1ff] = (negative_flag | carry_flag);
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sp == 0xff);
+	TEST_CHECK(cpu.sr == (negative_flag | carry_flag));
+}
+
 void test_bmi(void)
 {
 	CPU_CTX cpu;
@@ -515,6 +529,18 @@ void test_rol_zp_x(void)
 	TEST_CHECK(mem[0x20] == 0x81);
 }
 
+void test_sec(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x38; /* sec */
+	cpu.pc = 0x100;
+	cpu.sr = zero_flag;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sr == (zero_flag | carry_flag));
+}
+
 void test_rti(void)
 {
 	CPU_CTX cpu;
@@ -581,6 +607,21 @@ void test_lsr_zp(void)
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == carry_flag);
 	TEST_CHECK(mem[0x10] == 0x40);
+}
+
+void test_pha(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x48; /* pha */
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.ac = 0x80;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sp == 0xfe);
+	TEST_CHECK(mem[0x1ff] == 0x80);
+	TEST_CHECK(cpu.sr == 0x0);
 }
 
 void test_bvc(void)
@@ -652,6 +693,18 @@ void test_lsr_zp_x(void)
 	TEST_CHECK(mem[0x20] == 0x20);
 }
 
+void test_cli(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x58; /* cli */
+	cpu.pc = 0x100;
+	cpu.sr = (negative_flag | interrupt_flag);
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sr == negative_flag);
+}
+
 void test_rts(void)
 {
 	CPU_CTX cpu;
@@ -714,6 +767,22 @@ void test_ror_zp(void)
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == (negative_flag | carry_flag));
 	TEST_CHECK(mem[0x10] == 0xc0);
+}
+
+void test_pla(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x68; /* pla */
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.sp = 0xfe;
+	mem[0x1ff] = 0x80;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sp == 0xff);
+	TEST_CHECK(cpu.ac == 0x80);
+	TEST_CHECK(cpu.sr == negative_flag);
 }
 
 void test_bvs(void)
@@ -783,6 +852,18 @@ void test_ror_zp_x(void)
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == zero_flag);
 	TEST_CHECK(mem[0x20] == 0x0);
+}
+
+void test_sei(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x78; /* sei */
+	cpu.pc = 0x100;
+	cpu.sr = zero_flag;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sr == (zero_flag | interrupt_flag));
 }
 
 void test_sta_zp_x_ind(void)
@@ -1495,26 +1576,32 @@ TEST_LIST = {
 	{"bit zp", test_bit_zp},		// 0x24
 	{"and zp", test_and_zp},		// 0x25
 	{"rol zp", test_rol_zp},		// 0x26
+	{"plp", test_plp}, 			// 0x28
 	{"bmi", test_bmi},			// 0x30
 	{"and (zp),y", test_and_zp_y_ind},	// 0x31
 	{"and zp,x", test_and_zp_x},		// 0x35
 	{"rol zp,x", test_rol_zp_x},		// 0x36
+	{"sec", test_sec}, 			// 0x38
 	{"rti", test_rti},			// 0x40
 	{"eor (zp,x)", test_eor_zp_x_ind},	// 0x41
 	{"eor zp", test_eor_zp},		// 0x45
 	{"lsr zp", test_lsr_zp},		// 0x46
+	{"pha", test_pha}, 			// 0x48
 	{"bvc", test_bvc},			// 0x50
 	{"eor (zp),y", test_eor_zp_y_ind},	// 0x51
 	{"eor zp,x", test_eor_zp_x},		// 0x55
 	{"lsr zp,x", test_lsr_zp_x},		// 0x56
+	{"cli", test_cli}, 			// 0x58
 	{"rts", test_rts},			// 0x60
 	{"adc (zp,x)", test_adc_zp_x_ind},	// 0x61	
 	{"adc zp", test_adc_zp},		// 0x65
 	{"ror zp", test_ror_zp},		// 0x66
+	{"pla", test_pla}, 			// 0x68
 	{"bvs", test_bvs},			// 0x70
 	{"adc (zp),y", test_adc_zp_y_ind},	// 0x71
 	{"adc zp,x", test_adc_zp_x},		// 0x75
 	{"ror zp,x", test_ror_zp_x},		// 0x76
+	{"sei", test_sei}, 			// 0x78
 	{"sta (zp,x)", test_sta_zp_x_ind},	// 0x81
 	{"sty zp", test_sty_zp},		// 0x84
 	{"sta zp", test_sta_zp},		// 0x85
