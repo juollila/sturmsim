@@ -560,6 +560,9 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->xr = mem[fetch_byte(cpu) + cpu->yr];
 		set_nz_flags(cpu, cpu->yr);
 		break;
+	case 0xb8: /* CLV */
+		cpu->sr &= (~overflow_flag);
+		break;
 	case 0xbd: /* LDA abs,x */
 		// printf("lda abs,x\n");
 		cpu->ac = mem[fetch_word(cpu) + cpu->xr];
@@ -584,6 +587,10 @@ void execute_instruction(CPU_CTX *cpu)
 		mem[zp] = mem[zp] - 1;
 		set_nz_flags(cpu, mem[zp]);
 		break;
+	case 0xc8: /* INY */
+		cpu->yr = cpu->yr + 1;
+		set_nz_flags(cpu, cpu->yr);
+		break;
 	case 0xd0: /* BNE */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & zero_flag) != zero_flag) cpu->pc = cpu->pc + offset;
@@ -600,6 +607,9 @@ void execute_instruction(CPU_CTX *cpu)
 		zp = fetch_byte(cpu) + cpu->xr;
 		mem[zp] = mem[zp] - 1;
 		set_nz_flags(cpu, mem[zp]);
+		break;
+	case 0xd8: /* CLD */
+		cpu->sr &= (~decimal_flag);
 		break;
 	case 0xe0: /* CPX # */
 		set_cmp_flags(cpu, cpu->xr, fetch_byte(cpu));
@@ -640,6 +650,9 @@ void execute_instruction(CPU_CTX *cpu)
 		zp = fetch_byte(cpu) + cpu->xr;
 		mem[zp] = mem[zp] + 1;
 		set_nz_flags(cpu, mem[zp]);
+		break;
+	case 0xf8: /* SED */
+		cpu->sr |= decimal_flag;
 		break;
 
 	default:

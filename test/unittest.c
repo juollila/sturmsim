@@ -1268,6 +1268,18 @@ void test_ldx_zp_y(void)
 	TEST_CHECK(cpu.xr == 0x64);
 }
 
+void test_clv(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xb8; /* clv */
+	cpu.pc = 0x100;
+	cpu.sr = (negative_flag | overflow_flag);
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sr == negative_flag);
+}
+
 void test_cpy_imm(void)
 {
 	CPU_CTX cpu;
@@ -1365,6 +1377,20 @@ void test_dec_zp(void)
 	TEST_CHECK(mem[0x10] == 0xff);
 }
 
+void test_iny(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xc8; /* iny */
+	cpu.pc = 0x100;
+	cpu.sr = 0;
+	cpu.yr = 0x7f;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sr == negative_flag);
+	TEST_CHECK(cpu.yr == 0x80);
+}
+
 void test_bne(void)
 {
 	CPU_CTX cpu;
@@ -1431,6 +1457,18 @@ void test_dec_zp_x(void)
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == zero_flag);
 	TEST_CHECK(mem[0x20] == 0x0);
+}
+
+void test_cld(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xd8; /* clv */
+	cpu.pc = 0x100;
+	cpu.sr = (negative_flag | decimal_flag);
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sr == negative_flag);
 }
 
 void test_cpx_imm(void)
@@ -1531,6 +1569,20 @@ void test_inc_zp(void)
         TEST_CHECK(mem[0x10] == 0x80);
 }    
 
+void test_inx(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xe8; /* inx */
+	cpu.pc = 0x100;
+	cpu.sr = 0;
+	cpu.xr = 0xff;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sr == zero_flag);
+	TEST_CHECK(cpu.yr == 0x0);
+}
+
 void test_beq(void)
 {
 	CPU_CTX cpu;
@@ -1597,6 +1649,18 @@ void test_inc_zp_x(void)
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == zero_flag);
 	TEST_CHECK(mem[0x20] == 0x0);
+}
+
+void test_sed(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xf8; /* sed */
+	cpu.pc = 0x100;
+	cpu.sr = negative_flag;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sr == (negative_flag | decimal_flag));
 }
 
 TEST_LIST = {
@@ -1669,23 +1733,28 @@ TEST_LIST = {
 	{"ldy zp,x", test_ldy_zp_x},		// 0xb4
 	{"lda zp,x", test_lda_zp_x},		// 0xb5
 	{"ldx zp,y", test_ldx_zp_y},		// 0xb6
+	{"clv", test_clv}, 			// 0xb8
 	{"cpy #", test_cpy_imm},		// 0xc0
 	{"cmp (zp,x)", test_cmp_zp_x_ind},	// 0xc1
 	{"cpy zp", test_cpy_zp},		// 0xc4
 	{"cmp zp", test_cmp_zp},		// 0xc5
 	{"dec zp", test_dec_zp},		// 0xc6
+	{"iny", test_iny}, 			// 0xc8
 	{"bne", test_bne},			// 0xd0
 	{"cmp (zp),y", test_cmp_zp_y_ind},	// 0xd1
 	{"cmp zp,x", test_cmp_zp_x},		// 0xd5
-	{"dec zp,x", test_dec_zp_x},		// 0xb6
+	{"dec zp,x", test_dec_zp_x},		// 0xd6
+	{"cld", test_cld}, 			// 0xd8
 	{"cpx #", test_cpx_imm},		// 0xe0
 	{"sbc (zp,x)", test_sbc_zp_x_ind},	// 0xe1
 	{"cpx zp", test_cpx_zp},		// 0xe4
 	{"sbc zp", test_sbc_zp},		// 0xe5
 	{"inc zp", test_inc_zp},		// 0xe6
+	{"inx", test_inx}, 			// 0xe8
 	{"beq", test_beq},			// 0xf0
 	{"sbc (zp),y", test_sbc_zp_y_ind},	// 0xf1
 	{"sbc zp,x", test_sbc_zp_x},		// 0xf5
 	{"inc zp,x", test_inc_zp_x},		// 0xf6
+	{"sed", test_sed}, 			// 0xf8
 	{ NULL, NULL }
 };
