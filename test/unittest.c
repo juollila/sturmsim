@@ -107,7 +107,6 @@ void test_sbc_flags(void)
 	cpu.sr = carry_flag;
 	result = sbc(&cpu, 0x0, 0x0);
 	TEST_CHECK(result == 0x0);
-	printf("%02x\n", result);
 	TEST_CHECK((cpu.sr & negative_flag) == 0);
 	TEST_CHECK((cpu.sr & zero_flag) == zero_flag);
 	TEST_CHECK((cpu.sr & carry_flag) == carry_flag);
@@ -261,6 +260,18 @@ void test_asl_zp(void)
 	TEST_CHECK(mem[0x10] == 0x0);
 }
 
+void test_php(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x8; /* php */
+	cpu.pc = 0x100;
+	cpu.sr = negative_flag;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sp == 0xfe);
+	TEST_CHECK(mem[0x1ff] == (break_flag | one_flag | negative_flag));
+}
 
 void test_bpl(void)
 {
@@ -276,7 +287,6 @@ void test_bpl(void)
 	cpu.sr = 0x0;
 	execute_instruction(&cpu);
 	TEST_CHECK(cpu.pc == 0x122);
-	// printf("cpu.pc: %02x\n", cpu.pc);
 }
 
 
@@ -331,6 +341,18 @@ void test_asl_zp_x(void)
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(mem[0x20] == 0x80);
+}
+
+void test_clc(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x18; /* clc */
+	cpu.pc = 0x100;
+	cpu.sr = (negative_flag | carry_flag);
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sr == negative_flag);
 }
 
 void test_jsr(void)
@@ -1462,10 +1484,12 @@ TEST_LIST = {
 	{"ora (zp,x)", test_ora_zp_x_ind},	// 0x1
 	{"ora zp", test_ora_zp},		// 0x5
 	{"asl zp", test_asl_zp},		// 0x6
+	{"php", test_php}, 			// 0x8
 	{"bpl", test_bpl},			// 0x10
 	{"ora (zp),y", test_ora_zp_y_ind},	// 0x11
 	{"ora zp,x", test_ora_zp_x},		// 0x15
 	{"asl zp,x", test_asl_zp_x},		// 0x16
+	{"clc", test_clc}, 			// 0x18
 	{"jsr", test_jsr},			// 0x20
 	{"and (zp,x)", test_and_zp_x_ind},	// 0x21
 	{"bit zp", test_bit_zp},		// 0x24
