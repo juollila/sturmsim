@@ -1876,6 +1876,21 @@ void test_inx(void)
 	TEST_CHECK(cpu.yr == 0x0);
 }
 
+void test_sbc_imm(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xe9; /* sbc #$8 */
+	mem[0x101] = 0x8;
+	cpu.pc = 0x100;
+	cpu.sr = carry_flag;
+	cpu.ac = 0x80;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.sr == (carry_flag | overflow_flag));
+	TEST_CHECK(cpu.ac == 0x78);
+}
+
 void test_beq(void)
 {
 	CPU_CTX cpu;
@@ -1954,6 +1969,24 @@ void test_sed(void)
 	execute_instruction(&cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == (negative_flag | decimal_flag));
+}
+
+void test_sbc_abs_y(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xf9; /* sbc $2000,y */
+	mem[0x101] = 0x00;
+	mem[0x102] = 0x20;
+	mem[0x2010] = 0x20;
+	cpu.ac = 0x20;
+	cpu.yr = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x103);
+	TEST_CHECK(cpu.ac == 0xff);
+	TEST_CHECK(cpu.sr == (negative_flag));
 }
 
 TEST_LIST = {
@@ -2059,10 +2092,12 @@ TEST_LIST = {
 	{"sbc zp", test_sbc_zp},		// 0xe5
 	{"inc zp", test_inc_zp},		// 0xe6
 	{"inx", test_inx}, 			// 0xe8
+	{"sbc #", test_sbc_imm}, 		// 0xe9
 	{"beq", test_beq},			// 0xf0
 	{"sbc (zp),y", test_sbc_zp_y_ind},	// 0xf1
 	{"sbc zp,x", test_sbc_zp_x},		// 0xf5
 	{"inc zp,x", test_inc_zp_x},		// 0xf6
 	{"sed", test_sed}, 			// 0xf8
+	{"sbc abs,y", test_sbc_abs_y}, 		// 0xd9
 	{ NULL, NULL }
 };

@@ -702,6 +702,9 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->xr = cpu->xr + 1;
 		set_nz_flags(cpu, cpu->xr);
 		break;
+	case 0xe9: /* SBC # */
+		cpu->ac = sbc(cpu, cpu->ac, fetch_byte(cpu));
+		break;
 	case 0xf0: /* BEQ */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & zero_flag) == zero_flag) cpu->pc = cpu->pc + offset;
@@ -722,7 +725,9 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0xf8: /* SED */
 		cpu->sr |= decimal_flag;
 		break;
-
+	case 0xf9: /* SBC abs,y */
+		cpu->ac = sbc(cpu, cpu->ac, mem[fetch_word(cpu) + cpu->yr]);
+		break;
 	default:
 		printf("Not implemented instruction\n");
 		cpu->halt = true;
