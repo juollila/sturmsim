@@ -338,6 +338,9 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = cpu->ac | fetch_byte(cpu);
 		set_nz_flags(cpu, cpu->ac);
 		break;
+	case 0xa: /* ASL */
+		cpu->ac = asl(cpu, cpu->ac);
+		break;
 	case 0x10: /* BPL rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & negative_flag) != negative_flag) cpu->pc = cpu->pc + offset;
@@ -395,6 +398,9 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = cpu->ac & fetch_byte(cpu);
 		set_nz_flags(cpu, cpu->ac);
 		break;
+	case 0x2a: /* ROL */
+		cpu->ac = rol(cpu, cpu->ac);
+		break;
 	case 0x30: /* BMI rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & negative_flag) == negative_flag) cpu->pc = cpu->pc + offset;
@@ -446,6 +452,9 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = cpu->ac ^ fetch_byte(cpu);
 		set_nz_flags(cpu, cpu->ac);
 		break;
+	case 0x4a: /* LSR */
+		cpu->ac = lsr(cpu, cpu->ac);
+		break;
 	case 0x50: /* BVC rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & overflow_flag) != overflow_flag) cpu->pc = cpu->pc + offset;
@@ -493,6 +502,9 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0x69: /* ADC # */
 		cpu->ac = adc(cpu, cpu->ac, fetch_byte(cpu));
+		break;
+	case 0x6a: /* ROR */
+		cpu->ac = ror(cpu, cpu->ac);
 		break;
 	case 0x70: /* BVS rel */
 		offset = (i8) fetch_byte(cpu);
