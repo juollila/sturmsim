@@ -1779,6 +1779,20 @@ void test_cmp_imm(void)
 	TEST_CHECK(cpu.sr == (carry_flag | zero_flag));
 }
 
+void test_dex(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xca; /* dex */
+	cpu.pc = 0x100;
+	cpu.sr = 0;
+	cpu.xr = 0x1;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sr == zero_flag);
+	TEST_CHECK(cpu.xr == 0x0);
+}
+
 void test_bne(void)
 {
 	CPU_CTX cpu;
@@ -2004,6 +2018,18 @@ void test_sbc_imm(void)
 	TEST_CHECK(cpu.ac == 0x78);
 }
 
+void test_nop(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xea; /* nop */
+	cpu.pc = 0x100;
+	cpu.sr = 0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sr == 0);
+}
+
 void test_beq(void)
 {
 	CPU_CTX cpu;
@@ -2201,6 +2227,7 @@ TEST_LIST = {
 	{"dec zp", test_dec_zp},		// 0xc6
 	{"iny", test_iny}, 			// 0xc8
 	{"cmp #", test_cmp_imm}, 		// 0xc9
+	{"dex", test_dex}, 			// 0xca
 	{"bne", test_bne},			// 0xd0
 	{"cmp (zp),y", test_cmp_zp_y_ind},	// 0xd1
 	{"cmp zp,x", test_cmp_zp_x},		// 0xd5
@@ -2214,6 +2241,7 @@ TEST_LIST = {
 	{"inc zp", test_inc_zp},		// 0xe6
 	{"inx", test_inx}, 			// 0xe8
 	{"sbc #", test_sbc_imm}, 		// 0xe9
+	{"nop", test_nop}, 			// 0xea
 	{"beq", test_beq},			// 0xf0
 	{"sbc (zp),y", test_sbc_zp_y_ind},	// 0xf1
 	{"sbc zp,x", test_sbc_zp_x},		// 0xf5
