@@ -571,6 +571,21 @@ void test_plp(void)
 	TEST_CHECK(cpu.sr == (negative_flag | carry_flag));
 }
 
+void test_and_imm(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x29; /* and #80 */
+	mem[0x101] = 0x80;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.ac = 0x8;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK((cpu.sr) == zero_flag);
+	TEST_CHECK((cpu.ac) == 0x0);
+}
+
 void test_bmi(void)
 {
 	CPU_CTX cpu;
@@ -651,6 +666,24 @@ void test_sec(void)
 	execute_instruction(&cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == (zero_flag | carry_flag));
+}
+
+void test_and_abs_y(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x39; /* and $1001,y */
+	mem[0x101] = 0x01;
+	mem[0x102] = 0x10;
+	mem[0x1011] = 0x8f;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.yr = 0x10;
+	cpu.ac = 0x80;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x103);
+	TEST_CHECK((cpu.sr) == negative_flag);
+	TEST_CHECK((cpu.ac) == 0x80);
 }
 
 void test_rti(void)
@@ -1801,11 +1834,13 @@ TEST_LIST = {
 	{"and zp", test_and_zp},		// 0x25
 	{"rol zp", test_rol_zp},		// 0x26
 	{"plp", test_plp}, 			// 0x28
+	{"and #", test_and_imm}, 		// 0x29
 	{"bmi", test_bmi},			// 0x30
 	{"and (zp),y", test_and_zp_y_ind},	// 0x31
 	{"and zp,x", test_and_zp_x},		// 0x35
 	{"rol zp,x", test_rol_zp_x},		// 0x36
 	{"sec", test_sec}, 			// 0x38
+	{"and abs,y", test_and_abs_y}, 		// 0x39
 	{"rti", test_rti},			// 0x40
 	{"eor (zp,x)", test_eor_zp_x_ind},	// 0x41
 	{"eor zp", test_eor_zp},		// 0x45

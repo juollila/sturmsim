@@ -391,6 +391,10 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x28: /* PLP */
 		cpu->sr = pull_byte(cpu);
 		break;
+	case 0x29: /* AND # */
+		cpu->ac = cpu->ac & fetch_byte(cpu);
+		set_nz_flags(cpu, cpu->ac);
+		break;
 	case 0x30: /* BMI rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & negative_flag) == negative_flag) cpu->pc = cpu->pc + offset;
@@ -411,6 +415,10 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0x38: /* SEC */
 		cpu->sr |= carry_flag;
+		break;
+	case 0x39: /* AND abs,y */
+		cpu->ac = cpu->ac & mem[fetch_word(cpu) + cpu->yr];
+		set_nz_flags(cpu, cpu->ac);
 		break;
 	case 0x40: /* RTI */
 		cpu->sr = pull_byte(cpu);
