@@ -352,6 +352,21 @@ void test_php(void)
 	TEST_CHECK(mem[0x1ff] == (break_flag | one_flag | negative_flag));
 }
 
+void test_ora_imm(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x09; /* ora #80 */
+	mem[0x101] = 0x80;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.ac = 0x8;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK((cpu.sr) == negative_flag);
+	TEST_CHECK((cpu.ac) == 0x88);
+}
+
 void test_bpl(void)
 {
 	CPU_CTX cpu;
@@ -432,6 +447,24 @@ void test_clc(void)
 	execute_instruction(&cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == negative_flag);
+}
+
+void test_ora_abs_y(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x19; /* ora $1001,y */
+	mem[0x101] = 0x01;
+	mem[0x102] = 0x10;
+	mem[0x1011] = 0xf;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.yr = 0x10;
+	cpu.ac = 0x70;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x103);
+	TEST_CHECK((cpu.sr) == 0x0);
+	TEST_CHECK((cpu.ac) == 0x7f);
 }
 
 void test_jsr(void)
@@ -1755,11 +1788,13 @@ TEST_LIST = {
 	{"ora zp", test_ora_zp},		// 0x5
 	{"asl zp", test_asl_zp},		// 0x6
 	{"php", test_php}, 			// 0x8
+	{"ora #", test_ora_imm}, 		// 0x9
 	{"bpl", test_bpl},			// 0x10
 	{"ora (zp),y", test_ora_zp_y_ind},	// 0x11
 	{"ora zp,x", test_ora_zp_x},		// 0x15
 	{"asl zp,x", test_asl_zp_x},		// 0x16
 	{"clc", test_clc}, 			// 0x18
+	{"ora abs,y", test_ora_abs_y}, 		// 0x19
 	{"jsr", test_jsr},			// 0x20
 	{"and (zp,x)", test_and_zp_x_ind},	// 0x21
 	{"bit zp", test_bit_zp},		// 0x24

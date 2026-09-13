@@ -334,6 +334,10 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x8: /* PHP */
 		push_byte(cpu, (cpu->sr | one_flag | break_flag));
 		break;
+	case 0x9: /* ORA # */
+		cpu->ac = cpu->ac | fetch_byte(cpu);
+		set_nz_flags(cpu, cpu->ac);
+		break;
 	case 0x10: /* BPL rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & negative_flag) != negative_flag) cpu->pc = cpu->pc + offset;
@@ -354,6 +358,10 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0x18: /* CLC */
 		cpu->sr &= (~carry_flag);
+		break;
+	case 0x19: /* ORA abs,y */
+		cpu->ac = cpu->ac | mem[fetch_word(cpu) + cpu->yr];
+		set_nz_flags(cpu, cpu->ac);
 		break;
 	case 0x20: /* JSR abs */
 		push_word(cpu, cpu->pc + 1);
