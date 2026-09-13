@@ -963,6 +963,21 @@ void test_pla(void)
 	TEST_CHECK(cpu.sr == negative_flag);
 }
 
+void test_adc_imm(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x69; /* adc #80 */
+	mem[0x101] = 0x80;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.ac = 0x8;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK((cpu.sr) == negative_flag);
+	TEST_CHECK((cpu.ac) == 0x88);
+}
+
 void test_bvs(void)
 {
 	CPU_CTX cpu;
@@ -1042,6 +1057,24 @@ void test_sei(void)
 	execute_instruction(&cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == (zero_flag | interrupt_flag));
+}
+
+void test_adc_abs_y(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x79; /* adc $1001,y */
+	mem[0x101] = 0x01;
+	mem[0x102] = 0x10;
+	mem[0x1011] = 0xf;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.yr = 0x10;
+	cpu.ac = 0x8f;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x103);
+	TEST_CHECK((cpu.sr) == negative_flag);
+	TEST_CHECK((cpu.ac) == 0x9e);
 }
 
 void test_sta_zp_x_ind(void)
@@ -1891,11 +1924,13 @@ TEST_LIST = {
 	{"adc zp", test_adc_zp},		// 0x65
 	{"ror zp", test_ror_zp},		// 0x66
 	{"pla", test_pla}, 			// 0x68
+	{"adc #", test_adc_imm}, 		// 0x69
 	{"bvs", test_bvs},			// 0x70
 	{"adc (zp),y", test_adc_zp_y_ind},	// 0x71
 	{"adc zp,x", test_adc_zp_x},		// 0x75
 	{"ror zp,x", test_ror_zp_x},		// 0x76
 	{"sei", test_sei}, 			// 0x78
+	{"adc abs,y", test_adc_abs_y}, 		// 0x79
 	{"sta (zp,x)", test_sta_zp_x_ind},	// 0x81
 	{"sty zp", test_sty_zp},		// 0x84
 	{"sta zp", test_sta_zp},		// 0x85

@@ -491,6 +491,9 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = pull_byte(cpu);
 		set_nz_flags(cpu, cpu->ac);
 		break;
+	case 0x69: /* ADC # */
+		cpu->ac = adc(cpu, cpu->ac, fetch_byte(cpu));
+		break;
 	case 0x70: /* BVS rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & overflow_flag) == overflow_flag) cpu->pc = cpu->pc + offset;
@@ -509,6 +512,9 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0x78: /* SEI */
 		cpu->sr |= interrupt_flag;
+		break;
+	case 0x79: /* ADC abs,y */
+		cpu->ac = adc(cpu, cpu->ac, mem[fetch_word(cpu) + cpu->yr]);
 		break;
 	case 0x81: /* STA (zp, x) */
 		zp = fetch_byte(cpu);
