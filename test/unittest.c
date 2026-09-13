@@ -1253,6 +1253,23 @@ void test_tya(void)
 	TEST_CHECK(cpu.ac == 0x0);
 }
 
+void test_sta_abs_y(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x99; /* sta $1001,y */
+	mem[0x101] = 0x01;
+	mem[0x102] = 0x10;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.yr = 0x10;
+	cpu.ac = 0x8f;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x103);
+	TEST_CHECK(cpu.sr == 0);
+	TEST_CHECK(mem[0x1011] == 0x8f);
+}
+
 void test_ldy_imm(void)
 {
 	CPU_CTX cpu;
@@ -1394,6 +1411,20 @@ void test_tay(void)
 	TEST_CHECK(cpu.yr == 0x80);
 }
 
+void test_lda_imm(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xa9; /* lda #$80 */
+	mem[0x101] = 0x80;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK(cpu.ac == 0x80);
+	TEST_CHECK(cpu.sr == negative_flag);
+}
+
 void test_bcs(void)
 {
 	CPU_CTX cpu;
@@ -1489,6 +1520,24 @@ void test_clv(void)
 	execute_instruction(&cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == negative_flag);
+}
+
+void test_lda_abs_y(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xb9; /* lda $1001,y */
+	mem[0x101] = 0x01;
+	mem[0x102] = 0x10;
+	mem[0x1011] = 0x0;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.yr = 0x10;
+	cpu.ac = 0x8f;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x103);
+	TEST_CHECK(cpu.sr == zero_flag);
+	TEST_CHECK(cpu.ac == 0x0);
 }
 
 void test_cpy_imm(void)
@@ -1942,6 +1991,7 @@ TEST_LIST = {
 	{"sta zp,x", test_sta_zp_x},		// 0x95
 	{"stx zp,y", test_stx_zp_y},		// 0x96
 	{"tya", test_tya}, 			// 0x98
+	{"sta abs,y", test_sta_abs_y}, 		// 0x99
 	{"ldy #", test_ldy_imm},		// 0xa0
 	{"lda (zp,x)", test_lda_zp_x_ind},	// 0xa1
 	{"ldx #", test_ldx_imm},		// 0xa2
@@ -1949,12 +1999,14 @@ TEST_LIST = {
 	{"lda zp", test_lda_zp},		// 0xa5
 	{"ldx zp", test_ldx_zp},		// 0xa6
 	{"tay", test_tay}, 			// 0xa8
+	{"lda #", test_lda_imm}, 		// 0xa9
 	{"bcs", test_bcs},			// 0xb0
 	{"lda (zp),y", test_lda_zp_y_ind},	// 0xb1
 	{"ldy zp,x", test_ldy_zp_x},		// 0xb4
 	{"lda zp,x", test_lda_zp_x},		// 0xb5
 	{"ldx zp,y", test_ldx_zp_y},		// 0xb6
 	{"clv", test_clv}, 			// 0xb8
+	{"lda abs,y", test_lda_abs_y}, 		// 0xb9
 	{"cpy #", test_cpy_imm},		// 0xc0
 	{"cmp (zp,x)", test_cmp_zp_x_ind},	// 0xc1
 	{"cpy zp", test_cpy_zp},		// 0xc4
