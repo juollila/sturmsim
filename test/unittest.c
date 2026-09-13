@@ -1073,6 +1073,30 @@ void test_ror(void)
 	TEST_CHECK(cpu.ac == 0xc0);
 }
 
+void test_jmp_ind(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x6c; /* jmp ($20ff) */
+	mem[0x101] = 0xff;
+	mem[0x102] = 0x20;
+	mem[0x20ff] = 0x22;
+	mem[0x2000] = 0xfd;
+	cpu.pc = 0x100;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0xfd22);
+	TEST_CHECK(cpu.sp == 0xff);
+	mem[0x100] = 0x6c; /* jmp ($8000) */
+	mem[0x101] = 0x00;
+	mem[0x102] = 0x80;
+	mem[0x8000] = 0x10;
+	mem[0x8001] = 0x90;
+	cpu.pc = 0x100;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x9010);
+	TEST_CHECK(cpu.sp == 0xff);
+}
+
 void test_bvs(void)
 {
 	CPU_CTX cpu;
@@ -2224,6 +2248,7 @@ TEST_LIST = {
 	{"pla", test_pla}, 			// 0x68
 	{"adc #", test_adc_imm}, 		// 0x69
 	{"ror", test_ror}, 			// 0x6a
+	{"jmp ind", test_jmp_ind}, 		// 0x6c
 	{"bvs", test_bvs},			// 0x70
 	{"adc (zp),y", test_adc_zp_y_ind},	// 0x71
 	{"adc zp,x", test_adc_zp_x},		// 0x75

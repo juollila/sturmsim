@@ -516,6 +516,12 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x6a: /* ROR */
 		cpu->ac = ror(cpu, cpu->ac);
 		break;
+	case 0x6c: /* JMP (ind) */
+		address = fetch_word(cpu);
+		/* jmp indirect has a bug */
+		i16 bug = ((address & 0xff) == 0xff) ? -0xff : 1;
+		cpu->pc = mem[address] + (0x100 * mem[address + bug]);
+		break;
 	case 0x70: /* BVS rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & overflow_flag) == overflow_flag) cpu->pc = cpu->pc + offset;
