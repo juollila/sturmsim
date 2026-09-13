@@ -1211,6 +1211,21 @@ void test_dey(void)
 	TEST_CHECK(cpu.yr == 0xff);
 }
 
+void test_txa(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x8a; /* txa */
+	cpu.pc = 0x100;
+	cpu.ac = 0;
+	cpu.xr = 0x80;
+	cpu.sr = 0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sr == negative_flag);
+	TEST_CHECK(cpu.ac == 0x80);
+}
+
 void test_bcc(void)
 {
 	CPU_CTX cpu;
@@ -1324,6 +1339,20 @@ void test_sta_abs_y(void)
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(mem[0x1011] == 0x8f);
+}
+
+void test_txs(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x9a; /* txs */
+	cpu.pc = 0x100;
+	cpu.xr = 0x80;
+	cpu.sr = 0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sr == 0x0);
+	TEST_CHECK(cpu.sp == 0x80);
 }
 
 void test_ldy_imm(void)
@@ -1481,6 +1510,20 @@ void test_lda_imm(void)
 	TEST_CHECK(cpu.sr == negative_flag);
 }
 
+void test_tax(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xaa; /* tax */
+	cpu.pc = 0x100;
+	cpu.ac = 0x80;
+	cpu.sr = 0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sr == negative_flag);
+	TEST_CHECK(cpu.xr == 0x80);
+}
+
 void test_bcs(void)
 {
 	CPU_CTX cpu;
@@ -1594,6 +1637,20 @@ void test_lda_abs_y(void)
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == zero_flag);
 	TEST_CHECK(cpu.ac == 0x0);
+}
+
+void test_tsx(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xba; /* tsx */
+	cpu.pc = 0x100;
+	cpu.sp = 0x80;
+	cpu.sr = 0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x101);
+	TEST_CHECK(cpu.sr == negative_flag);
+	TEST_CHECK(cpu.xr == 0x80);
 }
 
 void test_cpy_imm(void)
@@ -2111,6 +2168,7 @@ TEST_LIST = {
 	{"sta zp", test_sta_zp},		// 0x85
 	{"stx zp", test_stx_zp},		// 0x86
 	{"dey", test_dey}, 			// 0x88
+	{"txa", test_txa}, 			// 0x8a
 	{"bcc", test_bcc},			// 0x90
 	{"sta (zp),y", test_sta_zp_y_ind},	// 0x91
 	{"sty zp,x", test_sty_zp_x},		// 0x94
@@ -2118,6 +2176,7 @@ TEST_LIST = {
 	{"stx zp,y", test_stx_zp_y},		// 0x96
 	{"tya", test_tya}, 			// 0x98
 	{"sta abs,y", test_sta_abs_y}, 		// 0x99
+	{"txs", test_txs}, 			// 0x9a
 	{"ldy #", test_ldy_imm},		// 0xa0
 	{"lda (zp,x)", test_lda_zp_x_ind},	// 0xa1
 	{"ldx #", test_ldx_imm},		// 0xa2
@@ -2126,6 +2185,7 @@ TEST_LIST = {
 	{"ldx zp", test_ldx_zp},		// 0xa6
 	{"tay", test_tay}, 			// 0xa8
 	{"lda #", test_lda_imm}, 		// 0xa9
+	{"tax", test_tax}, 			// 0xaa
 	{"bcs", test_bcs},			// 0xb0
 	{"lda (zp),y", test_lda_zp_y_ind},	// 0xb1
 	{"ldy zp,x", test_ldy_zp_x},		// 0xb4
@@ -2133,6 +2193,7 @@ TEST_LIST = {
 	{"ldx zp,y", test_ldx_zp_y},		// 0xb6
 	{"clv", test_clv}, 			// 0xb8
 	{"lda abs,y", test_lda_abs_y}, 		// 0xb9
+	{"tsx", test_tsx}, 			// 0xba
 	{"cpy #", test_cpy_imm},		// 0xc0
 	{"cmp (zp,x)", test_cmp_zp_x_ind},	// 0xc1
 	{"cpy zp", test_cpy_zp},		// 0xc4

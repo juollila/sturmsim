@@ -546,6 +546,10 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->yr = cpu->yr - 1;
 		set_nz_flags(cpu, cpu->yr);
 		break;
+	case 0x8a: /* TXA */
+		cpu->ac = cpu->xr;
+		set_nz_flags(cpu, cpu->ac);
+		break;
 	case 0x90: /* BCC rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & carry_flag) != carry_flag) cpu->pc = cpu->pc + offset;
@@ -570,6 +574,9 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0x99: /* STA abs,y */
 		mem[fetch_word(cpu) + cpu->yr] = cpu->ac;
+		break;
+	case 0x9a: /* TXS */
+		cpu->sp = cpu->xr;
 		break;
 	case 0xa0: /* LDY # */
 		// printf("ldy\n");
@@ -607,6 +614,10 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = fetch_byte(cpu);
 		set_nz_flags(cpu, cpu->ac);
 		break;
+	case 0xaa: /* TAX */
+		cpu->xr = cpu->ac;
+		set_nz_flags(cpu, cpu->xr);
+		break;
 	case 0xb0: /* BCS rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & carry_flag) == carry_flag) cpu->pc = cpu->pc + offset;
@@ -636,6 +647,10 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0xb9: /* LDA abs,y */
 		cpu->ac = mem[fetch_word(cpu) + cpu->yr];
 		set_nz_flags(cpu, cpu->ac);
+		break;
+	case 0xba: /* TSX */
+		cpu->xr = cpu->sp;
+		set_nz_flags(cpu, cpu->xr);
 		break;
 	case 0xbd: /* LDA abs,x */
 		// printf("lda abs,x\n");
