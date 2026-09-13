@@ -178,22 +178,32 @@ u8 adc(CPU_CTX *cpu, u8 i, u8 j)
 
 u8 sbc(CPU_CTX *cpu, u8 i, u8 j)
 {
-	int diff = i - j - ((cpu->sr & carry_flag) ? 0 : 1);
-	u8 r = diff;
-	/* set overflow flag if needed */
+	int borrow = (int)((cpu->sr & carry_flag) ? 0 : 1);
+	int diff = (int)i - (int) j - borrow;
+
+	u8 r = (u8)diff;
+
+	/* binary mode flags */
 	if ((((i ^ j) & (i ^ r)) & 0x80) != 0) {
 		cpu->sr |= overflow_flag;
 	} else {
 		cpu->sr &= (~overflow_flag);
 	}
+	set_nz_flags(cpu, r);
+
+	if (cpu->sr & decimal_flag) {
+		if (((i & 0xf) - borrow) < (j & 0xf)) diff = diff - 0x6;
+		if (diff < 0) diff = diff - 0x60;
+		r = (u8) diff;
+	}
+
 	/* set carry flag if needed */
 	if (diff >= 0x0) {
 		cpu->sr |= carry_flag; /* no borrow */
 	} else {
 		cpu->sr &= (~carry_flag); /* borrow */
 	}
-	/* set negative and zero flags if needed */
-	set_nz_flags(cpu, r);
+
 	return r;
 }
 
