@@ -481,7 +481,7 @@ void test_ora_abs_y(void)
 	TEST_CHECK(cpu.ac == 0x7f);
 }
 
-void test_jsr(void)
+void test_jsr_abs(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
@@ -613,6 +613,32 @@ void test_rol(void)
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x81);
 }
+
+void test_bit_abs(void)
+{
+        CPU_CTX cpu;
+        init_cpu(&cpu);
+        mem[0x100] = 0x2c; /* bit $2001 */
+        mem[0x101] = 0x01;
+        mem[0x102] = 0x20;
+        mem[0x2001] = 0x7f;
+        cpu.pc = 0x100;
+        cpu.ac = 0x80;
+        cpu.sr = 0x0;
+        execute_instruction(&cpu);
+        TEST_CHECK(cpu.pc == 0x103);
+        TEST_CHECK(cpu.sr == (zero_flag | overflow_flag));
+        mem[0x100] = 0x2c; /* bit $2001 */
+        mem[0x101] = 0x01;
+        mem[0x102] = 0x20;
+        mem[0x2001] = 0x80;
+        cpu.pc = 0x100;
+        cpu.ac = 0x80;
+        cpu.sr = 0x0;
+        execute_instruction(&cpu);
+        TEST_CHECK(cpu.pc == 0x103);
+        TEST_CHECK(cpu.sr == negative_flag);
+}  
 
 void test_bmi(void)
 {
@@ -824,6 +850,19 @@ void test_lsr(void)
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == (carry_flag | zero_flag));
 	TEST_CHECK(cpu.ac == 0x0);
+}
+
+void test_jmp_abs(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x4c; /* jmp $fd22 */
+	mem[0x101] = 0x22;
+	mem[0x102] = 0xfd;
+	cpu.pc = 0x100;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0xfd22);
+	TEST_CHECK(cpu.sp == 0xff);
 }
 
 void test_bvc(void)
@@ -2149,7 +2188,7 @@ TEST_LIST = {
 	{"asl zp,x", test_asl_zp_x},		// 0x16
 	{"clc", test_clc}, 			// 0x18
 	{"ora abs,y", test_ora_abs_y}, 		// 0x19
-	{"jsr", test_jsr},			// 0x20
+	{"jsr", test_jsr_abs},			// 0x20
 	{"and (zp,x)", test_and_zp_x_ind},	// 0x21
 	{"bit zp", test_bit_zp},		// 0x24
 	{"and zp", test_and_zp},		// 0x25
@@ -2157,6 +2196,7 @@ TEST_LIST = {
 	{"plp", test_plp}, 			// 0x28
 	{"and #", test_and_imm}, 		// 0x29
 	{"rol", test_rol}, 			// 0x2a
+	{"bit abs", test_bit_abs}, 		// 0x2c
 	{"bmi", test_bmi},			// 0x30
 	{"and (zp),y", test_and_zp_y_ind},	// 0x31
 	{"and zp,x", test_and_zp_x},		// 0x35
@@ -2170,6 +2210,7 @@ TEST_LIST = {
 	{"pha", test_pha}, 			// 0x48
 	{"eor #", test_eor_imm}, 		// 0x49
 	{"lsr", test_lsr}, 			// 0x4a
+	{"jmp abs", test_jmp_abs}, 		// 0x4c
 	{"bvc", test_bvc},			// 0x50
 	{"eor (zp),y", test_eor_zp_y_ind},	// 0x51
 	{"eor zp,x", test_eor_zp_x},		// 0x55

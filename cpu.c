@@ -258,6 +258,13 @@ static u8 ror(CPU_CTX *cpu, u8 i)
 	return r;
 }
 
+static void bit(CPU_CTX *cpu, u8 i)
+{
+	if ((cpu->ac & i) == 0) cpu->sr |= zero_flag; else cpu->sr &= (~zero_flag);
+	if (i & 0x80) cpu->sr |= negative_flag; else cpu->sr &= (~negative_flag);
+	if (i & 0x40) cpu->sr |= overflow_flag; else cpu->sr &= (~overflow_flag);
+}
+
 static void print_registers(CPU_CTX *cpu)
 {
 	printf("   PC   SR AC XR YR SP\n");
@@ -377,11 +384,8 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = cpu->ac & mem[address];
 		set_nz_flags(cpu, cpu->ac);
 		break;
-	case 0x24: /* BTS zp */
-		zp = fetch_byte(cpu);
-		if ((cpu->ac & mem[zp]) == 0) cpu->sr |= zero_flag; else cpu->sr &= (~zero_flag);
-		if ((mem[zp] & 0x80) == 0x80) cpu->sr |= negative_flag; else cpu->sr &= (~negative_flag);
-		if ((mem[zp] & 0x40) == 0x40) cpu->sr |= overflow_flag; else cpu->sr &= (~overflow_flag);
+	case 0x24: /* BIT zp */
+		bit(cpu, mem[fetch_byte(cpu)]);
 		break;
 	case 0x25: /* AND zp */
 		cpu->ac = cpu->ac & mem[fetch_byte(cpu)];
@@ -400,6 +404,9 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0x2a: /* ROL */
 		cpu->ac = rol(cpu, cpu->ac);
+		break;
+	case 0x2c: /* BIT abs */
+		bit(cpu, mem[fetch_word(cpu)]);
 		break;
 	case 0x30: /* BMI rel */
 		offset = (i8) fetch_byte(cpu);
@@ -454,6 +461,9 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0x4a: /* LSR */
 		cpu->ac = lsr(cpu, cpu->ac);
+		break;
+	case 0x4c: /* JMP abs */
+		cpu->pc = fetch_word(cpu);
 		break;
 	case 0x50: /* BVC rel */
 		offset = (i8) fetch_byte(cpu);
