@@ -769,6 +769,21 @@ void test_pha(void)
 	TEST_CHECK(cpu.sr == 0x0);
 }
 
+void test_eor_imm(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x49; /* eor #80 */
+	mem[0x101] = 0x80;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.ac = 0x88;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x102);
+	TEST_CHECK((cpu.sr) == 0);
+	TEST_CHECK((cpu.ac) == 0x8);
+}
+
 void test_bvc(void)
 {
 	CPU_CTX cpu;
@@ -848,6 +863,24 @@ void test_cli(void)
 	execute_instruction(&cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == negative_flag);
+}
+
+void test_eor_abs_y(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x59; /* eor $1001,y */
+	mem[0x101] = 0x01;
+	mem[0x102] = 0x10;
+	mem[0x1011] = 0xf;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.yr = 0x10;
+	cpu.ac = 0x8f;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x103);
+	TEST_CHECK((cpu.sr) == negative_flag);
+	TEST_CHECK((cpu.ac) == 0x80);
 }
 
 void test_rts(void)
@@ -1846,11 +1879,13 @@ TEST_LIST = {
 	{"eor zp", test_eor_zp},		// 0x45
 	{"lsr zp", test_lsr_zp},		// 0x46
 	{"pha", test_pha}, 			// 0x48
+	{"eor #", test_eor_imm}, 		// 0x49
 	{"bvc", test_bvc},			// 0x50
 	{"eor (zp),y", test_eor_zp_y_ind},	// 0x51
 	{"eor zp,x", test_eor_zp_x},		// 0x55
 	{"lsr zp,x", test_lsr_zp_x},		// 0x56
 	{"cli", test_cli}, 			// 0x58
+	{"eor abs,y", test_eor_abs_y}, 		// 0x59
 	{"rts", test_rts},			// 0x60
 	{"adc (zp,x)", test_adc_zp_x_ind},	// 0x61	
 	{"adc zp", test_adc_zp},		// 0x65

@@ -442,6 +442,10 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x48: /* PHA */
 		push_byte(cpu, cpu->ac);
 		break;
+	case 0x49: /* EOR # */
+		cpu->ac = cpu->ac ^ fetch_byte(cpu);
+		set_nz_flags(cpu, cpu->ac);
+		break;
 	case 0x50: /* BVC rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & overflow_flag) != overflow_flag) cpu->pc = cpu->pc + offset;
@@ -462,6 +466,10 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0x58: /* CLI */
 		cpu->sr &= (~interrupt_flag);
+		break;
+	case 0x59: /* EOR abs,y */
+		cpu->ac = cpu->ac ^ mem[fetch_word(cpu) + cpu->yr];
+		set_nz_flags(cpu, cpu->ac);
 		break;
 	case 0x60: /* RTS */
 		// printf("rts\n");
