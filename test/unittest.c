@@ -1907,6 +1907,23 @@ void test_dex(void)
 	TEST_CHECK(cpu.xr == 0x0);
 }
 
+void test_cpy_abs(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.yr = 0x10;
+	mem[0x100] = 0xcc; /* cpy $4020 */
+	mem[0x101] = 0x20;
+	mem[0x102] = 0x40;
+	mem[0x4020] = 0x1;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x103);
+	TEST_CHECK(cpu.yr == 0x10);
+	TEST_CHECK(cpu.sr == carry_flag);
+}
+
 void test_bne(void)
 {
 	CPU_CTX cpu;
@@ -2144,6 +2161,23 @@ void test_nop(void)
 	TEST_CHECK(cpu.sr == 0);
 }
 
+void test_cpx_abs(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.xr = 0x10;
+	mem[0x100] = 0xec; /* cpx $4020 */
+	mem[0x101] = 0x20;
+	mem[0x102] = 0x40;
+	mem[0x4020] = 0x1;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x103);
+	TEST_CHECK(cpu.xr == 0x10);
+	TEST_CHECK(cpu.sr == carry_flag);
+}
+
 void test_beq(void)
 {
 	CPU_CTX cpu;
@@ -2348,6 +2382,7 @@ TEST_LIST = {
 	{"iny", test_iny}, 			// 0xc8
 	{"cmp #", test_cmp_imm}, 		// 0xc9
 	{"dex", test_dex}, 			// 0xca
+	{"cpy abs", test_cpy_abs}, 		// 0xcc
 	{"bne", test_bne},			// 0xd0
 	{"cmp (zp),y", test_cmp_zp_y_ind},	// 0xd1
 	{"cmp zp,x", test_cmp_zp_x},		// 0xd5
@@ -2362,6 +2397,7 @@ TEST_LIST = {
 	{"inx", test_inx}, 			// 0xe8
 	{"sbc #", test_sbc_imm}, 		// 0xe9
 	{"nop", test_nop}, 			// 0xea
+	{"cpx abs", test_cpx_abs}, 		// 0xec
 	{"beq", test_beq},			// 0xf0
 	{"sbc (zp),y", test_sbc_zp_y_ind},	// 0xf1
 	{"sbc zp,x", test_sbc_zp_x},		// 0xf5

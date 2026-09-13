@@ -714,6 +714,9 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->xr = cpu->xr - 1;
 		set_nz_flags(cpu, cpu->xr);
 		break;
+	case 0xcc: /* CPY abs */
+		set_cmp_flags(cpu, cpu->yr, mem[fetch_word(cpu)]);
+		break;
 	case 0xd0: /* BNE */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & zero_flag) != zero_flag) cpu->pc = cpu->pc + offset;
@@ -764,6 +767,9 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = sbc(cpu, cpu->ac, fetch_byte(cpu));
 		break;
 	case 0xea: /* NOP */
+		break;
+	case 0xec: /* CPX abs */
+		set_cmp_flags(cpu, cpu->xr, mem[fetch_word(cpu)]);
 		break;
 	case 0xf0: /* BEQ */
 		offset = (i8) fetch_byte(cpu);
