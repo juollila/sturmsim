@@ -99,6 +99,48 @@ void test_adc_flags(void)
 	TEST_CHECK((cpu.sr & zero_flag) == 0);
 }
 
+void test_adc_bcd_flags(void)
+{
+	CPU_CTX cpu;
+	u8 result;
+	/* 0x99 + 0x00 */
+	init_cpu(&cpu);
+	cpu.sr = decimal_flag;
+	result = adc(&cpu, 0x99, 0x00);
+	TEST_CHECK(result == 0x99);
+	TEST_CHECK(cpu.sr == (decimal_flag | negative_flag));
+	/* 0x99 + 0x00 + carry */
+	cpu.sr = decimal_flag | carry_flag;
+	result = adc(&cpu, 0x99, 0x00);
+	TEST_CHECK(result == 0x00);
+	TEST_CHECK(cpu.sr == (decimal_flag | negative_flag | carry_flag));
+	/* 0xaa + 0x11 */
+	cpu.sr = decimal_flag;
+	result = adc(&cpu, 0xaa, 0x11);
+	TEST_CHECK(result == 0x21);
+	TEST_CHECK(cpu.sr == (decimal_flag | negative_flag | carry_flag));
+	/* 0x15 + 0x27 */
+	cpu.sr = decimal_flag;
+	result = adc(&cpu, 0x15, 0x27);
+	TEST_CHECK(result == 0x42);
+	TEST_CHECK(cpu.sr == decimal_flag);
+	/* 0x15 + 0x27 + carry */
+	cpu.sr = decimal_flag | carry_flag;
+	result = adc(&cpu, 0x15, 0x27);
+	TEST_CHECK(result == 0x43);
+	TEST_CHECK(cpu.sr == decimal_flag);
+	/* 0x50 + 0x50 */
+	cpu.sr = decimal_flag;
+	result = adc(&cpu, 0x50, 0x50);
+	TEST_CHECK(result == 0x00);
+	TEST_CHECK(cpu.sr == (decimal_flag | negative_flag | overflow_flag | carry_flag));
+	/* 0x79 + 0x20 + carry */
+	cpu.sr = decimal_flag | carry_flag;
+	result = adc(&cpu, 0x79, 0x20);
+	TEST_CHECK(result == 0x00);
+	TEST_CHECK(cpu.sr == (decimal_flag | negative_flag | overflow_flag | carry_flag));
+}
+
 void test_sbc_flags(void)
 {
 	CPU_CTX cpu;
@@ -1668,6 +1710,7 @@ TEST_LIST = {
 	{"negative flag", test_negative_flag },
 	{"compare flags", test_cmp_flags },
 	{"adc flags", test_adc_flags },
+	{"adc bcd flags", test_adc_bcd_flags },
 	{"sbc flags", test_sbc_flags },
 	{"brk", test_brk}, 			// 0x0
 	{"ora (zp,x)", test_ora_zp_x_ind},	// 0x1

@@ -141,22 +141,38 @@ void set_cmp_flags(CPU_CTX *cpu, u8 i, u8 j)
 
 u8 adc(CPU_CTX *cpu, u8 i, u8 j)
 {
-	int sum = i + j + ((cpu->sr & carry_flag) ? 1 : 0);
-	u8 r = sum;
-	/* set overflow flag if needed */
-	if (((i ^ r) & (j ^ r) & 0x80) != 0) {
-		cpu->sr |= overflow_flag;
-	} else {
-		cpu->sr &= (~overflow_flag);
-	}
-	/* set carry flag if needed */
+	u8 carry = (cpu->sr & carry_flag) ? 1 : 0;
+
+	/* calculate binary sum */
+	int sum = i + j + carry; 
+	u8 r = (u8)sum;
+
+	/* binary mode flags */
 	if (sum > 0xff) {
 		cpu->sr |= carry_flag;
 	} else {
 		cpu->sr &= (~carry_flag);
 	}
-	/* set negative and zero flags if needed */
+	if (((i ^ r) & (j ^ r) & 0x80) != 0) {
+		cpu->sr |= overflow_flag;
+	} else {
+		cpu->sr &= (~overflow_flag);
+	}
 	set_nz_flags(cpu, r);
+
+	/* decimal mode */
+	if (cpu->sr & decimal_flag) {
+		if ((i & 0xf) + (j & 0xf) + carry > 9) sum = sum + 0x6;
+		if (sum > 0x99) sum = sum + 0x60;
+		r = (u8) sum;
+		/* decimal mode affects only to carry flag */
+		if (sum > 0xff) {
+			cpu->sr |= carry_flag;
+		} else {
+			cpu->sr &= (~carry_flag);
+		}
+	}
+
 	return r;
 }
 
