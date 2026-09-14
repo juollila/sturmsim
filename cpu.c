@@ -501,6 +501,10 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = cpu->ac ^ mem[fetch_word(cpu)];
 		set_nz_flags(cpu, cpu->ac);
 		break;
+	case 0x4e: /* LSR abs */
+		address = fetch_word(cpu);
+		mem[address] = lsr(cpu, mem[address]);
+		break;
 	case 0x50: /* BVC rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & overflow_flag) != overflow_flag) cpu->pc = cpu->pc + offset;
@@ -529,6 +533,10 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x5d: /* EOR abs,x */
 		cpu->ac = cpu->ac ^ mem[fetch_word(cpu) + cpu->xr];
 		set_nz_flags(cpu, cpu->ac);
+		break;
+	case 0x5e: /* LSR abs */
+		address = fetch_word(cpu) + cpu->xr;
+		mem[address] = lsr(cpu, mem[address]);
 		break;
 	case 0x60: /* RTS */
 		// printf("rts\n");
