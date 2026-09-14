@@ -802,6 +802,11 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0xcd: /* CMP abs */
 		set_cmp_flags(cpu, cpu->ac, mem[fetch_word(cpu)]);
 		break;
+	case 0xce: /* DEC abs */
+		address = fetch_word(cpu);
+		mem[address] = mem[address] - 1;
+		set_nz_flags(cpu, mem[address]);
+		break;
 	case 0xd0: /* BNE */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & zero_flag) != zero_flag) cpu->pc = cpu->pc + offset;
@@ -827,6 +832,11 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0xdd: /* CMP abs,x */
 		set_cmp_flags(cpu, cpu->ac, mem[fetch_word(cpu) + cpu->xr]);
+		break;
+	case 0xde: /* DEC abs,x */
+		address = fetch_word(cpu) + cpu->xr;
+		mem[address] = mem[address] - 1;
+		set_nz_flags(cpu, mem[address]);
 		break;
 	case 0xe0: /* CPX # */
 		set_cmp_flags(cpu, cpu->xr, fetch_byte(cpu));
@@ -862,6 +872,11 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0xed: /* SBC abs */
 		cpu->ac = sbc(cpu, cpu->ac, mem[fetch_word(cpu)]);
 		break;
+	case 0xee: /* INC abs */
+		address = fetch_word(cpu);
+		mem[address] = mem[address] + 1;
+		set_nz_flags(cpu, mem[address]);
+		break;
 	case 0xf0: /* BEQ */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & zero_flag) == zero_flag) cpu->pc = cpu->pc + offset;
@@ -887,6 +902,11 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0xfd: /* SBC abs,x */
 		cpu->ac = sbc(cpu, cpu->ac, mem[fetch_word(cpu) + cpu->xr]);
+		break;
+	case 0xfe: /* INC abs,x */
+		address = fetch_word(cpu) + cpu->xr;
+		mem[address] = mem[address] + 1;
+		set_nz_flags(cpu, mem[address]);
 		break;
 	default:
 		printf("Not implemented instruction\n");

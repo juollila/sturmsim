@@ -2336,6 +2336,22 @@ void test_cmp_abs(void)
 	TEST_CHECK(cpu.ac == 0x15);
 }
 
+void test_dec_abs(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xce; /* dec $1409 */
+	mem[0x101] = 0x09;
+	mem[0x102] = 0x14;
+	mem[0x1409] = 0xce;
+	cpu.pc = 0x100;
+	cpu.sr = 0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x103);
+	TEST_CHECK(cpu.sr == negative_flag);
+	TEST_CHECK(mem[0x1409] == 0xcd);
+}
+
 void test_bne(void)
 {
 	CPU_CTX cpu;
@@ -2450,6 +2466,23 @@ void test_cmp_abs_x(void)
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == carry_flag);
 	TEST_CHECK(cpu.ac == 0x15);
+}
+
+void test_dec_abs_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0xde; /* dec $1400,x */
+	mem[0x101] = 0x00;
+	mem[0x102] = 0x14;
+	mem[0x1409] = 0xde;
+	cpu.pc = 0x100;
+	cpu.sr = 0;
+	cpu.xr = 0x9;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x103);
+	TEST_CHECK(cpu.sr == negative_flag);
+	TEST_CHECK(mem[0x1409] == 0xdd);
 }
 
 void test_cpx_imm(void)
@@ -2625,6 +2658,22 @@ void test_sbc_abs(void)
 	TEST_CHECK(cpu.ac == 0x4);
 }
 
+void test_inc_abs(void)
+{
+        CPU_CTX cpu;
+        init_cpu(&cpu);
+        mem[0x100] = 0xee; /* inc $1409 */
+        mem[0x101] = 0x09;
+        mem[0x102] = 0x14;
+        mem[0x1409] = 0xee;
+        cpu.pc = 0x100;
+        cpu.sr = 0;
+        execute_instruction(&cpu);
+        TEST_CHECK(cpu.pc == 0x103);
+        TEST_CHECK(cpu.sr == negative_flag);
+        TEST_CHECK(mem[0x1409] == 0xef);
+}
+
 void test_beq(void)
 {
 	CPU_CTX cpu;
@@ -2739,6 +2788,23 @@ void test_sbc_abs_x(void)
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == carry_flag);
 	TEST_CHECK(cpu.ac == 0x4);
+}
+
+void test_inc_abs_x(void)
+{
+        CPU_CTX cpu;
+        init_cpu(&cpu);
+        mem[0x100] = 0xfe; /* inc $1400,x */
+        mem[0x101] = 0x00;
+        mem[0x102] = 0x14;
+        mem[0x1409] = 0xfe;
+        cpu.pc = 0x100;
+        cpu.sr = 0x0;
+	cpu.xr = 0x9;
+        execute_instruction(&cpu);
+        TEST_CHECK(cpu.pc == 0x103);
+        TEST_CHECK(cpu.sr == negative_flag);
+        TEST_CHECK(mem[0x1409] == 0xff);
 }
 
 TEST_LIST = {
@@ -2872,13 +2938,15 @@ TEST_LIST = {
 	{"dex", test_dex}, 			// 0xca
 	{"cpy abs", test_cpy_abs}, 		// 0xcc
 	{"cmp abs", test_cmp_abs}, 		// 0xcd
+	{"dec abs", test_dec_abs}, 		// 0xce
 	{"bne", test_bne},			// 0xd0
 	{"cmp (zp),y", test_cmp_zp_y_ind},	// 0xd1
 	{"cmp zp,x", test_cmp_zp_x},		// 0xd5
 	{"dec zp,x", test_dec_zp_x},		// 0xd6
 	{"cld", test_cld}, 			// 0xd8
 	{"cmp abs,y", test_cmp_abs_y}, 		// 0xd9
-	{"cmp abs,x", test_cmp_abs_x}, 		// 0xcd
+	{"cmp abs,x", test_cmp_abs_x}, 		// 0xdd
+	{"dec abs,x", test_dec_abs_x}, 		// 0xde
 	{"cpx #", test_cpx_imm},		// 0xe0
 	{"sbc (zp,x)", test_sbc_zp_x_ind},	// 0xe1
 	{"cpx zp", test_cpx_zp},		// 0xe4
@@ -2889,6 +2957,7 @@ TEST_LIST = {
 	{"nop", test_nop}, 			// 0xea
 	{"cpx abs", test_cpx_abs}, 		// 0xec
 	{"sbc abs", test_sbc_abs}, 		// 0xed
+	{"inc abs", test_inc_abs}, 		// 0xee
 	{"beq", test_beq},			// 0xf0
 	{"sbc (zp),y", test_sbc_zp_y_ind},	// 0xf1
 	{"sbc zp,x", test_sbc_zp_x},		// 0xf5
@@ -2896,5 +2965,6 @@ TEST_LIST = {
 	{"sed", test_sed}, 			// 0xf8
 	{"sbc abs,y", test_sbc_abs_y}, 		// 0xf9
 	{"sbc abs,x", test_sbc_abs_x}, 		// 0xfd
+	{"inc abs,x", test_inc_abs_x}, 		// 0xfe
 	{ NULL, NULL }
 };
