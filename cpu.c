@@ -481,6 +481,10 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x4c: /* JMP abs */
 		cpu->pc = fetch_word(cpu);
 		break;
+	case 0x4d: /* EOR abs */
+		cpu->ac = cpu->ac ^ mem[fetch_word(cpu)];
+		set_nz_flags(cpu, cpu->ac);
+		break;
 	case 0x50: /* BVC rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & overflow_flag) != overflow_flag) cpu->pc = cpu->pc + offset;
@@ -504,6 +508,10 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0x59: /* EOR abs,y */
 		cpu->ac = cpu->ac ^ mem[fetch_word(cpu) + cpu->yr];
+		set_nz_flags(cpu, cpu->ac);
+		break;
+	case 0x5d: /* EOR abs,x */
+		cpu->ac = cpu->ac ^ mem[fetch_word(cpu) + cpu->xr];
 		set_nz_flags(cpu, cpu->ac);
 		break;
 	case 0x60: /* RTS */

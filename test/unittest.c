@@ -935,6 +935,24 @@ void test_jmp_abs(void)
 	TEST_CHECK(cpu.sp == 0xff);
 }
 
+void test_eor_abs(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x4d; /* eor $1409 */
+	mem[0x101] = 0x09;
+	mem[0x102] = 0x14;
+	mem[0x1409] = 0xf;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.ac = 0x8f;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x103);
+	TEST_CHECK(cpu.sr == negative_flag);
+	TEST_CHECK(cpu.ac == 0x80);
+}
+
+
 void test_bvc(void)
 {
 	CPU_CTX cpu;
@@ -1027,6 +1045,24 @@ void test_eor_abs_y(void)
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
 	cpu.yr = 0x10;
+	cpu.ac = 0x8f;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x103);
+	TEST_CHECK(cpu.sr == negative_flag);
+	TEST_CHECK(cpu.ac == 0x80);
+}
+
+void test_eor_abs_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x5d; /* eor $1400,x */
+	mem[0x101] = 0x00;
+	mem[0x102] = 0x14;
+	mem[0x1409] = 0xf;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.xr = 0x9;
 	cpu.ac = 0x8f;
 	execute_instruction(&cpu);
 	TEST_CHECK(cpu.pc == 0x103);
@@ -2394,12 +2430,14 @@ TEST_LIST = {
 	{"eor #", test_eor_imm}, 		// 0x49
 	{"lsr", test_lsr}, 			// 0x4a
 	{"jmp abs", test_jmp_abs}, 		// 0x4c
+	{"eor abs", test_eor_abs}, 		// 0x4d
 	{"bvc", test_bvc},			// 0x50
 	{"eor (zp),y", test_eor_zp_y_ind},	// 0x51
 	{"eor zp,x", test_eor_zp_x},		// 0x55
 	{"lsr zp,x", test_lsr_zp_x},		// 0x56
 	{"cli", test_cli}, 			// 0x58
 	{"eor abs,y", test_eor_abs_y}, 		// 0x59
+	{"eor abs,x", test_eor_abs_x}, 		// 0x4d
 	{"rts", test_rts},			// 0x60
 	{"adc (zp,x)", test_adc_zp_x_ind},	// 0x61	
 	{"adc zp", test_adc_zp},		// 0x65
