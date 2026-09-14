@@ -543,8 +543,11 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x6c: /* JMP (ind) */
 		address = fetch_word(cpu);
 		/* jmp indirect has a bug */
-		i16 bug = ((address & 0xff) == 0xff) ? -0xff : 1;
-		cpu->pc = mem[address] + (0x100 * mem[address + bug]);
+		i16 bug = ((address & 0xff) == 0xff) ? 0x100 : 0;
+		cpu->pc = mem[address] + (0x100 * mem[address + 1 - bug]);
+		break;
+	case 0x6d: /* ADC abs */
+		cpu->ac = adc(cpu, cpu->ac, mem[fetch_word(cpu)]);
 		break;
 	case 0x70: /* BVS rel */
 		offset = (i8) fetch_byte(cpu);
@@ -567,6 +570,9 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0x79: /* ADC abs,y */
 		cpu->ac = adc(cpu, cpu->ac, mem[fetch_word(cpu) + cpu->yr]);
+		break;
+	case 0x7d: /* ADC abs,x */
+		cpu->ac = adc(cpu, cpu->ac, mem[fetch_word(cpu) + cpu->xr]);
 		break;
 	case 0x81: /* STA (zp, x) */
 		zp = fetch_byte(cpu);
