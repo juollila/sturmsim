@@ -428,6 +428,10 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = cpu->ac & mem[fetch_word(cpu)];
 		set_nz_flags(cpu, cpu->ac);
 		break;
+	case 0x2e: /* ROL abs */
+		address = fetch_word(cpu);
+		mem[address] = rol(cpu, mem[address]);
+		break;
 	case 0x30: /* BMI rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & negative_flag) == negative_flag) cpu->pc = cpu->pc + offset;
@@ -457,6 +461,10 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = cpu->ac & mem[fetch_word(cpu) + cpu->xr];
 		set_nz_flags(cpu, cpu->ac);
 		break;
+	case 0x3e: /* ROL abs,x */
+		address = fetch_word(cpu) + cpu->xr;
+		mem[address] = rol(cpu, mem[address]);
+		break;		
 	case 0x40: /* RTI */
 		cpu->sr = pull_byte(cpu);
 		cpu->sr &= (~break_flag);

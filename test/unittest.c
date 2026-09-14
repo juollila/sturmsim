@@ -685,6 +685,22 @@ void test_and_abs(void)
 	TEST_CHECK(cpu.ac == 0x08);
 }
 
+void test_rol_abs(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x2e; /* rol $1409 */
+	mem[0x101] = 0x09;
+	mem[0x102] = 0x14;
+	mem[0x1409] = 0x81;
+	cpu.pc = 0x100;
+	cpu.sr = carry_flag;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x103);
+	TEST_CHECK(cpu.sr == carry_flag);
+	TEST_CHECK(mem[0x1409] == 0x3);
+}
+
 void test_rol(void)
 {
 	CPU_CTX cpu;
@@ -841,6 +857,23 @@ void test_and_abs_x(void)
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x80);
+}
+
+void test_rol_abs_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x3e; /* asl $1400,x */
+	mem[0x101] = 0x00;
+	mem[0x102] = 0x14;
+	mem[0x1409] = 0x14;
+	cpu.pc = 0x100;
+	cpu.sr = carry_flag;
+	cpu.xr = 0x9;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x103);
+	TEST_CHECK(cpu.sr == 0);
+	TEST_CHECK(mem[0x1409] == 0x29);
 }
 
 void test_rti(void)
@@ -2628,6 +2661,7 @@ TEST_LIST = {
 	{"rol", test_rol}, 			// 0x2a
 	{"bit abs", test_bit_abs}, 		// 0x2c
 	{"and abs", test_and_abs}, 		// 0x2d
+	{"rol abs", test_rol_abs}, 		// 0x2e
 	{"bmi", test_bmi},			// 0x30
 	{"and (zp),y", test_and_zp_y_ind},	// 0x31
 	{"and zp,x", test_and_zp_x},		// 0x35
@@ -2635,6 +2669,7 @@ TEST_LIST = {
 	{"sec", test_sec}, 			// 0x38
 	{"and abs,y", test_and_abs_y}, 		// 0x39
 	{"and abs,x", test_and_abs_x}, 		// 0x3d
+	{"rol abs,x", test_rol_abs_x}, 		// 0x3e
 	{"rti", test_rti},			// 0x40
 	{"eor (zp,x)", test_eor_zp_x_ind},	// 0x41
 	{"eor zp", test_eor_zp},		// 0x45
