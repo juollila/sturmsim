@@ -677,6 +677,10 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->yr = mem[fetch_word(cpu)];
 		set_nz_flags(cpu, cpu->yr);
 		break;
+	case 0xad: /* LDA abs */
+		cpu->ac = mem[fetch_word(cpu)];
+		set_nz_flags(cpu, cpu->ac);
+		break;
 	case 0xb0: /* BCS rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & carry_flag) == carry_flag) cpu->pc = cpu->pc + offset;
@@ -716,7 +720,6 @@ void execute_instruction(CPU_CTX *cpu)
 		set_nz_flags(cpu, cpu->yr);
 		break;
 	case 0xbd: /* LDA abs,x */
-		// printf("lda abs,x\n");
 		cpu->ac = mem[fetch_word(cpu) + cpu->xr];
 		set_nz_flags(cpu, cpu->ac);
 		break;
