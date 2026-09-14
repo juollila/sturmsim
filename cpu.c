@@ -816,6 +816,9 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0xec: /* CPX abs */
 		set_cmp_flags(cpu, cpu->xr, mem[fetch_word(cpu)]);
 		break;
+	case 0xed: /* SBC abs */
+		cpu->ac = sbc(cpu, cpu->ac, mem[fetch_word(cpu)]);
+		break;
 	case 0xf0: /* BEQ */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & zero_flag) == zero_flag) cpu->pc = cpu->pc + offset;
@@ -838,6 +841,9 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0xf9: /* SBC abs,y */
 		cpu->ac = sbc(cpu, cpu->ac, mem[fetch_word(cpu) + cpu->yr]);
+		break;
+	case 0xfd: /* SBC abs,x */
+		cpu->ac = sbc(cpu, cpu->ac, mem[fetch_word(cpu) + cpu->xr]);
 		break;
 	default:
 		printf("Not implemented instruction\n");
