@@ -634,6 +634,9 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x8d: /* STA abs */
 		mem[fetch_word(cpu)] = cpu->ac;
 		break;
+	case 0x8e: /* STX abs */
+		mem[fetch_word(cpu)] = cpu->xr;
+		break;
 	case 0x90: /* BCC rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & carry_flag) != carry_flag) cpu->pc = cpu->pc + offset;
@@ -713,6 +716,10 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = mem[fetch_word(cpu)];
 		set_nz_flags(cpu, cpu->ac);
 		break;
+	case 0xae: /* LDX abs */
+		cpu->xr = mem[fetch_word(cpu)];
+		set_nz_flags(cpu, cpu->xr);
+		break;
 	case 0xb0: /* BCS rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & carry_flag) == carry_flag) cpu->pc = cpu->pc + offset;
@@ -754,6 +761,10 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0xbd: /* LDA abs,x */
 		cpu->ac = mem[fetch_word(cpu) + cpu->xr];
 		set_nz_flags(cpu, cpu->ac);
+		break;
+	case 0xbe: /* LDX abs,y */
+		cpu->xr = mem[fetch_word(cpu) + cpu->yr];
+		set_nz_flags(cpu, cpu->xr);
 		break;
 	case 0xc0: /* CPY # */
 		set_cmp_flags(cpu, cpu->yr, fetch_byte(cpu));
