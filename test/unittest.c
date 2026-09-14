@@ -398,6 +398,22 @@ void test_ora_abs(void)
 	TEST_CHECK(cpu.ac == 0x88);
 }
 
+void test_asl_abs(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x0e; /* asl $1409 */
+	mem[0x101] = 0x09;
+	mem[0x102] = 0x14;
+	mem[0x1409] = 0x81;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x103);
+	TEST_CHECK(cpu.sr == carry_flag);
+	TEST_CHECK(mem[0x1409] == 0x2);
+}
+
 void test_bpl(void)
 {
 	CPU_CTX cpu;
@@ -502,8 +518,8 @@ void test_ora_abs_x(void)
 {
 	CPU_CTX cpu;
 	init_cpu(&cpu);
-	mem[0x100] = 0x0d; /* ora $1400,x */
-	mem[0x101] = 0x09;
+	mem[0x100] = 0x1d; /* ora $1400,x */
+	mem[0x101] = 0x00;
 	mem[0x102] = 0x14;
 	mem[0x1409] = 0x80;
 	cpu.pc = 0x100;
@@ -514,6 +530,23 @@ void test_ora_abs_x(void)
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x88);
+}
+
+void test_asl_abs_x(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	mem[0x100] = 0x1e; /* asl $1400,x */
+	mem[0x101] = 0x00;
+	mem[0x102] = 0x14;
+	mem[0x1409] = 0x14;
+	cpu.pc = 0x100;
+	cpu.sr = 0x0;
+	cpu.xr = 0x9;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x103);
+	TEST_CHECK(cpu.sr == 0);
+	TEST_CHECK(mem[0x1409] == 0x28);
 }
 
 void test_jsr_abs(void)
@@ -2576,6 +2609,7 @@ TEST_LIST = {
 	{"ora #", test_ora_imm}, 		// 0x9
 	{"asl", test_asl}, 			// 0xa
 	{"ora abs", test_ora_abs}, 		// 0xd
+	{"asl abs", test_asl_abs}, 		// 0xe
 	{"bpl", test_bpl},			// 0x10
 	{"ora (zp),y", test_ora_zp_y_ind},	// 0x11
 	{"ora zp,x", test_ora_zp_x},		// 0x15
@@ -2583,6 +2617,7 @@ TEST_LIST = {
 	{"clc", test_clc}, 			// 0x18
 	{"ora abs,y", test_ora_abs_y}, 		// 0x19
 	{"ora abs,x", test_ora_abs_x}, 		// 0x1d
+	{"asl abs,x", test_asl_abs_x}, 		// 0x1e
 	{"jsr", test_jsr_abs},			// 0x20
 	{"and (zp,x)", test_and_zp_x_ind},	// 0x21
 	{"bit zp", test_bit_zp},		// 0x24

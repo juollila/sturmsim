@@ -352,6 +352,10 @@ void execute_instruction(CPU_CTX *cpu)
 		cpu->ac = cpu->ac | mem[fetch_word(cpu)];
 		set_nz_flags(cpu, cpu->ac);
 		break;
+	case 0xe: /* ASL abs */
+		address = fetch_word(cpu);
+		mem[address] = asl(cpu, mem[address]);
+		break;
 	case 0x10: /* BPL rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & negative_flag) != negative_flag) cpu->pc = cpu->pc + offset;
@@ -380,6 +384,10 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x1d: /* ORA abs,x */
 		cpu->ac = cpu->ac | mem[fetch_word(cpu) + cpu->xr];
 		set_nz_flags(cpu, cpu->ac);
+		break;
+	case 0x1e: /* ASL abs,x */
+		address = fetch_word(cpu) + cpu->xr;
+		mem[address] = asl(cpu, mem[address]);
 		break;
 	case 0x20: /* JSR abs */
 		push_word(cpu, cpu->pc + 1);
