@@ -573,6 +573,10 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x6d: /* ADC abs */
 		cpu->ac = adc(cpu, cpu->ac, mem[fetch_word(cpu)]);
 		break;
+	case 0x6e: /* ROR abs */
+		address = fetch_word(cpu);
+		mem[address] = ror(cpu, mem[address]);
+		break;
 	case 0x70: /* BVS rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & overflow_flag) == overflow_flag) cpu->pc = cpu->pc + offset;
@@ -597,6 +601,10 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0x7d: /* ADC abs,x */
 		cpu->ac = adc(cpu, cpu->ac, mem[fetch_word(cpu) + cpu->xr]);
+		break;
+	case 0x7e: /* ROR abs,x */
+		address = fetch_word(cpu) + cpu->xr;
+		mem[address] = ror(cpu, mem[address]);
 		break;
 	case 0x81: /* STA (zp, x) */
 		zp = fetch_byte(cpu);
