@@ -599,6 +599,9 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x8c: /* STY abs */
 		mem[fetch_word(cpu)] = cpu->yr;
 		break;
+	case 0x8d: /* STA abs */
+		mem[fetch_word(cpu)] = cpu->ac;
+		break;
 	case 0x90: /* BCC rel */
 		offset = (i8) fetch_byte(cpu);
 		if ((cpu->sr & carry_flag) != carry_flag) cpu->pc = cpu->pc + offset;
@@ -626,6 +629,9 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	case 0x9a: /* TXS */
 		cpu->sp = cpu->xr;
+		break;
+	case 0x9d: /* STA abs,x */
+		mem[fetch_word(cpu) + cpu->xr] = cpu->ac;
 		break;
 	case 0xa0: /* LDY # */
 		// printf("ldy\n");

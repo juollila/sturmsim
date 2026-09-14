@@ -1447,6 +1447,24 @@ void test_sty_abs(void)
 	TEST_CHECK(mem[0x2010] == 0x80);
 }
 
+void test_sta_abs(void)
+{
+	CPU_CTX cpu;
+	init_cpu(&cpu);
+	cpu.ac = 0x18;
+	mem[0x100] = 0x8d; /* sta $1409 */
+	mem[0x101] = 0x09;
+	mem[0x102] = 0x14;
+	mem[0x1409] = 0x14;
+	cpu.pc = 0x100;
+	cpu.sr = 0;
+	cpu.ac = 0;
+	execute_instruction(&cpu);
+	TEST_CHECK(cpu.pc == 0x103);
+	TEST_CHECK(cpu.sr == 0);
+	TEST_CHECK(mem[0x1409] == 0x0);
+}
+
 void test_bcc(void)
 {
 	CPU_CTX cpu;
@@ -1575,6 +1593,24 @@ void test_txs(void)
 	TEST_CHECK(cpu.sr == 0x0);
 	TEST_CHECK(cpu.sp == 0x80);
 }
+
+void test_sta_abs_x(void)
+{
+        CPU_CTX cpu;
+        init_cpu(&cpu);
+        mem[0x100] = 0x9d; /* sta $1400,x */
+        mem[0x101] = 0x00;
+        mem[0x102] = 0x14;
+        mem[0x1409] = 0x14;
+        cpu.pc = 0x100;
+        cpu.sr = 0x0;
+        cpu.xr = 0x9;
+        cpu.ac = 0x0;
+        execute_instruction(&cpu);
+        TEST_CHECK(cpu.pc == 0x103);
+        TEST_CHECK(cpu.sr == 0);
+        TEST_CHECK(mem[0x1409] == 0x0);
+}    
 
 void test_ldy_imm(void)
 {
@@ -2497,6 +2533,7 @@ TEST_LIST = {
 	{"dey", test_dey}, 			// 0x88
 	{"txa", test_txa}, 			// 0x8a
 	{"sty abs", test_sty_abs}, 		// 0x8c
+	{"sta abs", test_sta_abs}, 		// 0x8d
 	{"bcc", test_bcc},			// 0x90
 	{"sta (zp),y", test_sta_zp_y_ind},	// 0x91
 	{"sty zp,x", test_sty_zp_x},		// 0x94
@@ -2505,6 +2542,7 @@ TEST_LIST = {
 	{"tya", test_tya}, 			// 0x98
 	{"sta abs,y", test_sta_abs_y}, 		// 0x99
 	{"txs", test_txs}, 			// 0x9a
+	{"sta abs,x", test_sta_abs_x}, 		// 0x9d
 	{"ldy #", test_ldy_imm},		// 0xa0
 	{"lda (zp,x)", test_lda_zp_x_ind},	// 0xa1
 	{"ldx #", test_ldx_imm},		// 0xa2
