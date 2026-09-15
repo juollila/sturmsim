@@ -24,6 +24,8 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <unistd.h>
+#include <termios.h>
 
 #include "cpu.h"
 
@@ -111,6 +113,22 @@ static void chrout(u8 i)
 	if (i == 0xd) i = '\n';
 	if (i >= 0x60) i = '.'; 
 	putchar(i);
+}
+
+static void chrin(CPU_CTX *cpu)
+{
+	struct termios term_old, term_new;
+	tcgetattr(STDIN_FILENO, &term_old);
+	term_new = term_old;
+	term_new.c_lflag &= ~(ICANON | ECHO); /* disable buffering and echo*/
+	tcsetattr(STDIN_FILENO, TCSANOW, &term_new);
+	char c = getchar();
+	if (c >= ' ')
+		putchar(c);
+	if (c == '\n')
+		c = '\r';
+	cpu->ac = (u8) c;
+	tcsetattr(STDIN_FILENO, TCSANOW, &term_old);
 }
 
 void set_nz_flags(CPU_CTX *cpu, u8 i)
@@ -279,6 +297,13 @@ void execute_instruction(CPU_CTX *cpu)
 
 	if (cpu->pc == 0xffd2) {
 		chrout(cpu->ac);
+		cpu->sr &= (~carry_flag);
+		instruction = 0x60; /* RTS */
+	} else if (cpu->pc == 0xffcf) {
+		chrin(cpu);
+		instruction = 0x60; /* RTS */
+	} else if (cpu->pc == 0xff90) {
+		//printf("setmsg\n");
 		instruction = 0x60; /* RTS */
 	} else {
 		instruction = fetch_byte(cpu);
@@ -392,7 +417,6 @@ void execute_instruction(CPU_CTX *cpu)
 	case 0x20: /* JSR abs */
 		push_word(cpu, cpu->pc + 1);
 		cpu->pc = fetch_word(cpu);
-		// printf("jsr %04x\n", cpu->pc);
 		break;
 	case 0x21: /* AND (zp,x) */
 		zp = fetch_byte(cpu);
@@ -910,6 +934,7 @@ void execute_instruction(CPU_CTX *cpu)
 		break;
 	default:
 		printf("Not implemented instruction\n");
+		printf("pc: %04x instruction: %02x\n", cpu->pc-1, instruction);
 		cpu->halt = true;
 		break;
 	}
