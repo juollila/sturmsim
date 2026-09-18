@@ -22,6 +22,8 @@
  * 
  */
 
+#include "stdbool.h"
+
 #ifndef CPU_H
 #define CPU_H
 
@@ -79,7 +81,6 @@ static void push_byte(CPU_CTX *cpu, u8 i);
 static void push_word(CPU_CTX *cpu, u16 i);
 static u8 pull_byte(CPU_CTX *cpu);
 static u16 pull_word(CPU_CTX *cpu);
-static void chrout(u8 i);
 void set_nz_flags(CPU_CTX *cpu, u8 i);
 void set_cmp_flags(CPU_CTX *cpu, u8 i, u8 j);
 u8 adc(CPU_CTX *cpu, u8 i, u8 j);
@@ -89,6 +90,7 @@ static u8 rol(CPU_CTX *cpu, u8 i);
 static u8 lsr(CPU_CTX *cpu, u8 i);
 static u8 ror(CPU_CTX *cpu, u8 i);
 static void bit(CPU_CTX *cpu, u8 i);
+static void brk_inst(CPU_CTX *cpu);
 static void print_registers(CPU_CTX *cpu);
 void execute_instruction(CPU_CTX *cpu);
 void execute_program(CPU_CTX *cpu);

@@ -24,10 +24,9 @@
 
 #include <stdio.h>
 #include <stdbool.h>
-#include <unistd.h>
-#include <termios.h>
 
 #include "cpu.h"
+#include "kernal.h"
 
 u8 mem[MEM_SIZE];
 
@@ -108,34 +107,12 @@ static u16 pull_word(CPU_CTX *cpu)
 	return value;	
 }
 
-static void chrout(u8 i)
-{
-	if (i == 0xd) i = '\n';
-	if (i >= 0x60) i = '.'; 
-	putchar(i);
-}
-
-static void chrin(CPU_CTX *cpu)
-{
-	struct termios term_old, term_new;
-	tcgetattr(STDIN_FILENO, &term_old);
-	term_new = term_old;
-	term_new.c_lflag &= ~(ICANON | ECHO); /* disable buffering and echo*/
-	tcsetattr(STDIN_FILENO, TCSANOW, &term_new);
-	char c = getchar();
-	if (c >= ' ')
-		putchar(c);
-	if (c == '\n')
-		c = '\r';
-	cpu->ac = (u8) c;
-	tcsetattr(STDIN_FILENO, TCSANOW, &term_old);
-}
-
 void set_nz_flags(CPU_CTX *cpu, u8 i)
 {
 	if (i == 0) cpu->sr |= zero_flag; else cpu->sr &= (~zero_flag);
 	if (i >= 0x80) cpu->sr |= negative_flag; else cpu->sr &= (~negative_flag);
 }
+
 
 void set_cmp_flags(CPU_CTX *cpu, u8 i, u8 j)
 {
@@ -283,6 +260,46 @@ static void bit(CPU_CTX *cpu, u8 i)
 	if (i & 0x40) cpu->sr |= overflow_flag; else cpu->sr &= (~overflow_flag);
 }
 
+/**
+ *
+ * What happens when BRK instruction is executed:
+ *
+ * CPU saves PC and SR to stack and jumps to IRQ routine.
+ * 
+ * Kernal's IRQ routine saves AC, XR and YR to stack and checks
+ * B flag in SR. After that it jumps via CBINV or CINV vector
+ * in RAM. CBINV vector is used if B (break) flag is set in SR.
+ *
+ * CBINV = $316-$317, this vector points to $fe66 in ROM
+ * ROM routine calls RESTOR, IOINIT and CINT Kernal routines
+ * and jumps to basic warm start.
+ *
+ */
+
+static void brk_inst(CPU_CTX *cpu) {
+	u16 address;
+	/* set break flag */
+	cpu->sr |= break_flag;
+
+	/* push PC and SR to stack (done by CPU) */
+	push_word(cpu, cpu->pc);
+	push_byte(cpu, cpu->sr);
+
+	/* push AC, XR and YR to stack (done by IRQ routine) */
+	push_byte(cpu, cpu->ac);
+	push_byte(cpu, cpu->xr);
+	push_byte(cpu, cpu->yr);
+
+	address = mem[0x316] + (0x100 * mem[0x317]);
+	/* if default CBINV vector then halt execution else jump via CBINV */
+	if (address == 0xfe66) {
+		printf("break\n\n");
+		cpu->halt = true;
+	} else {
+		cpu->pc = address;
+	}
+}
+
 static void print_registers(CPU_CTX *cpu)
 {
 	printf("   PC   SR AC XR YR SP\n");
@@ -294,60 +311,25 @@ void execute_instruction(CPU_CTX *cpu)
 	u8 instruction, zp;
 	i8 offset;
 	u16 address;
-
-	if (cpu->pc == 0xffd2) {
-		chrout(cpu->ac);
-		cpu->sr &= (~carry_flag);
-		instruction = 0x60; /* RTS */
-	} else if (cpu->pc == 0xffcf) {
-		chrin(cpu);
-		instruction = 0x60; /* RTS */
-	} else if (cpu->pc == 0xff90) {
-		//printf("setmsg\n");
-		instruction = 0x60; /* RTS */
-	} else {
-		instruction = fetch_byte(cpu);
+	switch (cpu->pc) {
+		case 0xff90:
+			instruction = kernal_setmsg(cpu);
+			break;
+		case 0xffcf:
+			instruction = kernal_chrin(cpu);
+			break;
+		case 0xffd2:
+			instruction = kernal_chrout(cpu);
+			break;
+		default:
+			instruction = fetch_byte(cpu);
+			break;
 	}
 
 	// printf("pc: %04x instruction: %02x\n", cpu->pc-1, instruction);
 	switch (instruction) {
 	case 0x0: /* BRK */
-		/**
-		 *
-		 * What happens when BRK instruction is executed:
-		 *
-		 * CPU saves PC and SR to stack and jumps to IRQ routine.
-		 * 
-		 * Kernal's IRQ routine saves AC, XR and YR to stack and checks
-		 * B flag in SR. After that it jumps via CBINV or CINV vector
-		 * in RAM. CBINV vector is used if B (break) flag is set in SR.
-		 *
-		 * CBINV = $316-$317, this vector points to $fe66 in ROM
-		 * ROM routine calls RESTOR, IOINIT and CINT Kernal routines
-		 * and jumps to basic warm start.
-		 *
-		 */
-
-		/* set break flag */
-		cpu->sr |= break_flag;
-
-		/* push PC and SR to stack (done by CPU) */
-		push_word(cpu, cpu->pc);
-		push_byte(cpu, cpu->sr);
-
-		/* push AC, XR and YR to stack (done by IRQ routine) */
-		push_byte(cpu, cpu->ac);
-		push_byte(cpu, cpu->xr);
-		push_byte(cpu, cpu->yr);
-
-		address = mem[0x316] + (0x100 * mem[0x317]);
-		/* if default CBINV vector then halt execution else jump via CBINV */
-		if (address == 0xfe66) {
-			printf("break\n\n");
-			cpu->halt = true;
-		} else {
-			cpu->pc = address;
-		}
+		brk_inst(cpu);
 		break;
 	case 0x1: /* ORA (zp,x) */
 		zp = fetch_byte(cpu);
