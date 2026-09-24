@@ -335,9 +335,9 @@ void execute_instruction(CPU_CTX *cpu)
 		case 0xffba:
 			instruction = kernal_setlfs(cpu);
 			break;
-//		case 0xffc0:
-//			instruction = kernal_open(cpu);
-//			break;
+		case 0xffc0:
+			instruction = kernal_open(cpu);
+			break;
 //		case 0xffc9:
 //			cpu->sr &= (~carry_flag);
 //			instruction = 0x60; /* ickout */

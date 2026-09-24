@@ -44,20 +44,20 @@ void init_kernal(void)
 	for (int i = 0; i < MAX_FILES ; i++) fcb[i].open = false;
 }
 
-static int find_free_fcb(void)
+static FCB_CTX *find_free_fcb(void)
 {
 	for (int i = 0; i < MAX_FILES; i++) {
-		if (fcb[i].open == false) return i;
+		if (fcb[i].open == false) return &fcb[i];
 	}
-	return -1;
+	return NULL;
 }
 
-static int find_fcb(int file)
+static FCB_CTX *find_fcb(int file)
 {
 	for (int i = 0; i < MAX_FILES; i++) {
-		if (fcb[i].file == file) return i;
+		if (fcb[i].file == file) return &fcb[i];
 	}
-	return -1;
+	return NULL;
 }
 
 u8 kernal_setmsg(CPU_CTX *cpu)
@@ -77,6 +77,22 @@ u8 kernal_setlfs(CPU_CTX *cpu)
 
 u8 kernal_open(CPU_CTX *cpu)
 {
+	if (find_fcb(lfs_file)) {
+		fprintf(stderr, "FILE OPEN ERROR\n");
+		cpu->sr |= carry_flag;
+		return RTS;
+	}
+	FCB_CTX *new = find_free_fcb();
+	if (new == NULL) {
+		fprintf(stderr, "TOO MANY FILES ERROR\n");
+		cpu->sr |= carry_flag;
+		return RTS;
+	}
+	new->file = lfs_file;
+	new->device = lfs_device;
+	new->sa = lfs_sa;
+	new->open = true;
+	printf("kernal_open: %d, %d, %d\n", new->file, new->device, new->sa);
 	cpu->sr &= (~carry_flag);
 	return RTS;
 }

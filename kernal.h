@@ -30,7 +30,7 @@
 typedef struct {
 	u8 file;
 	u8 device;
-	u8 secondary;
+	u8 sa;
 	u8 *name;
 	bool open;
 } FCB_CTX;
