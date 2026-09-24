@@ -27,7 +27,19 @@
 #ifndef KERNAL_H
 #define KERNAL_H
 
+typedef struct {
+	u8 file;
+	u8 device;
+	u8 secondary;
+	u8 *name;
+	bool open;
+} FCB_CTX;
+
+extern void init_kernal(void);
 extern u8 kernal_setmsg(CPU_CTX *cpu);
+extern u8 kernal_setlfs(CPU_CTX *cpu);
+extern u8 kernal_open(CPU_CTX *cpu);
+extern u8 kernal_clrchn(CPU_CTX *cpu);
 extern u8 kernal_chrin(CPU_CTX *cpu);
 extern u8 kernal_chrout(CPU_CTX *cpu);
 

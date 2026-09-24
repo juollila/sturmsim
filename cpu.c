@@ -293,7 +293,7 @@ static void brk_inst(CPU_CTX *cpu) {
 	address = mem[0x316] + (0x100 * mem[0x317]);
 	/* if default CBINV vector then halt execution else jump via CBINV */
 	if (address == 0xfe66) {
-		printf("break\n\n");
+		printf("break: %04x\n\n", cpu->pc - 1);
 		cpu->halt = true;
 	} else {
 		cpu->pc = address;
@@ -312,15 +312,48 @@ void execute_instruction(CPU_CTX *cpu)
 	i8 offset;
 	u16 address;
 	switch (cpu->pc) {
-		case 0xff90:
-			instruction = kernal_setmsg(cpu);
+//		case 0xea24:
+//	 		instruction = 0x60; /* synchronize colour pointer */
+//			break;
+//		case 0xe544:
+//			instruction = 0x60; /* clear screen */
+//			break;
+//		case 0xe5b4:
+//			cpu->sr &= (~carry_flag);
+//			cpu->sr &= (~interrupt_flag);
+//			cpu->ac = 'R';
+//			instruction = 0x60; /* get character from keyboard buffer */
+//			break;
+//		case 0xff90:
+//			instruction = kernal_setmsg(cpu);
+//			break;
+//		case 0xffb7:
+//			cpu->sr &= (~carry_flag);
+//			cpu->ac = 0x0;
+//			instruction = 0x60; /* readss */
+//			break;
+		case 0xffba:
+			instruction = kernal_setlfs(cpu);
 			break;
-		case 0xffcf:
-			instruction = kernal_chrin(cpu);
-			break;
+//		case 0xffc0:
+//			instruction = kernal_open(cpu);
+//			break;
+//		case 0xffc9:
+//			cpu->sr &= (~carry_flag);
+//			instruction = 0x60; /* ickout */
+//			break;
+//		case 0xffcc:
+//			instruction = kernal_clrchn(cpu);
+//			break;
+//		case 0xffcf:
+//			instruction = kernal_chrin(cpu);
+//			break;
 		case 0xffd2:
 			instruction = kernal_chrout(cpu);
 			break;
+//		case 0xfff0:
+//			instruction = 0x60; /* plot */
+//			break;
 		default:
 			instruction = fetch_byte(cpu);
 			break;

@@ -29,6 +29,7 @@
 
 #include "cpu.h"
 #include "sturmsim.h"
+#include "kernal.h"
 
 CTX ctx;
 
@@ -94,7 +95,8 @@ u16 load_program(char *file_name)
 	fclose(program);
 	// printf("start_address: %04x\n", start_address);
 	// printf("end_address: %04x\n", address-1);
-	return start_address;
+	return 0x80d;
+	// return start_address;
 
 }
 
@@ -105,6 +107,7 @@ int main(int argc, char *argv[])
 	CPU_CTX cpu;
 	init_cpu(&cpu);
 	init_memory();
+	init_kernal();
 	load_address = load_program(ctx.program_file_name);
 	cpu.pc = load_address;
 	clean_up();

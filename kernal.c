@@ -30,8 +30,58 @@
 #include "kernal.h"
 
 #define RTS 0x60
+#define MAX_FILES 10
+
+static u8 input_device = 0;	/* keyboard */
+static u8 output_device = 3;	/* crt */
+
+static u8 lfs_file, lfs_device, lfs_sa;
+
+FCB_CTX fcb[MAX_FILES];
+
+void init_kernal(void)
+{
+	for (int i = 0; i < MAX_FILES ; i++) fcb[i].open = false;
+}
+
+static int find_free_fcb(void)
+{
+	for (int i = 0; i < MAX_FILES; i++) {
+		if (fcb[i].open == false) return i;
+	}
+	return -1;
+}
+
+static int find_fcb(int file)
+{
+	for (int i = 0; i < MAX_FILES; i++) {
+		if (fcb[i].file == file) return i;
+	}
+	return -1;
+}
 
 u8 kernal_setmsg(CPU_CTX *cpu)
+{
+	cpu->sr &= (~carry_flag);
+	return RTS;
+}
+
+u8 kernal_setlfs(CPU_CTX *cpu)
+{
+	lfs_file = cpu->ac;
+	lfs_device = cpu->xr;
+	lfs_sa = cpu->yr;
+	cpu->sr &= (~carry_flag);
+	return RTS;
+}
+
+u8 kernal_open(CPU_CTX *cpu)
+{
+	cpu->sr &= (~carry_flag);
+	return RTS;
+}
+
+u8 kernal_clrchn(CPU_CTX *cpu)
 {
 	cpu->sr &= (~carry_flag);
 	return RTS;
