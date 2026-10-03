@@ -327,11 +327,9 @@ void execute_instruction(CPU_CTX *cpu)
 //		case 0xff90:
 //			instruction = kernal_setmsg(cpu);
 //			break;
-//		case 0xffb7:
-//			cpu->sr &= (~carry_flag);
-//			cpu->ac = 0x0;
-//			instruction = 0x60; /* readss */
-//			break;
+		case 0xffb7:
+			instruction = kernal_readst(cpu);
+			break;
 		case 0xffba:
 			instruction = kernal_setlfs(cpu);
 			break;
@@ -340,12 +338,10 @@ void execute_instruction(CPU_CTX *cpu)
 			break;
 		case 0xffc9:
 			instruction = kernal_chkout(cpu);
-			// cpu->sr &= (~carry_flag);
-			// instruction = 0x60; /* ickout */
 			break;
-//		case 0xffcc:
-//			instruction = kernal_clrchn(cpu);
-//			break;
+		case 0xffcc:
+			instruction = kernal_clrchn(cpu);
+			break;
 //		case 0xffcf:
 //			instruction = kernal_chrin(cpu);
 //			break;

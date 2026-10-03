@@ -37,6 +37,7 @@ typedef struct {
 
 extern void init_kernal(void);
 extern u8 kernal_setmsg(CPU_CTX *cpu);	// 0xff90
+extern u8 kernal_readst(CPU_CTX *cpu);	// 0xffb7
 extern u8 kernal_setlfs(CPU_CTX *cpu);	// 0xffba
 extern u8 kernal_open(CPU_CTX *cpu);	// 0xffc0
 extern u8 kernal_chkout(CPU_CTX *cpu);	// 0xffc9

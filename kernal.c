@@ -34,6 +34,7 @@
 
 static u8 input_device = 0;
 static u8 output_device = 3;
+static u8 io_status = 0;
 
 static u8 lfs_file, lfs_device, lfs_sa;
 
@@ -63,6 +64,13 @@ static FCB_CTX *find_fcb(int file)
 u8 kernal_setmsg(CPU_CTX *cpu)
 {
 	cpu->sr &= (~carry_flag);
+	return RTS;
+}
+
+
+u8 kernal_readst(CPU_CTX *cpu)
+{
+	cpu->ac = io_status;
 	return RTS;
 }
 
@@ -127,6 +135,8 @@ u8 kernal_chkout(CPU_CTX *cpu)
 
 u8 kernal_clrchn(CPU_CTX *cpu)
 {
+	input_device = 0;
+	output_device = 3;
 	cpu->sr &= (~carry_flag);
 	return RTS;
 }
