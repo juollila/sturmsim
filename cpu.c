@@ -338,10 +338,11 @@ void execute_instruction(CPU_CTX *cpu)
 		case 0xffc0:
 			instruction = kernal_open(cpu);
 			break;
-//		case 0xffc9:
-//			cpu->sr &= (~carry_flag);
-//			instruction = 0x60; /* ickout */
-//			break;
+		case 0xffc9:
+			instruction = kernal_chkout(cpu);
+			// cpu->sr &= (~carry_flag);
+			// instruction = 0x60; /* ickout */
+			break;
 //		case 0xffcc:
 //			instruction = kernal_clrchn(cpu);
 //			break;

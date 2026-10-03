@@ -32,8 +32,8 @@
 #define RTS 0x60
 #define MAX_FILES 10
 
-static u8 input_device = 0;	/* keyboard */
-static u8 output_device = 3;	/* crt */
+static u8 input_device = 0;
+static u8 output_device = 3;
 
 static u8 lfs_file, lfs_device, lfs_sa;
 
@@ -94,6 +94,34 @@ u8 kernal_open(CPU_CTX *cpu)
 	new->open = true;
 	printf("kernal_open: %d, %d, %d\n", new->file, new->device, new->sa);
 	cpu->sr &= (~carry_flag);
+	return RTS;
+}
+
+u8 kernal_chkout(CPU_CTX *cpu)
+{
+	u8 file = cpu->xr;
+	printf("kernal_chkout: %d\n", file);
+	FCB_CTX *fcb = find_fcb(file);
+	if (fcb == NULL || fcb->open == false) {
+		fprintf(stderr, "FILE_NOT_OPEN\n");
+		cpu->sr |= carry_flag;
+		cpu->ac = 0x3;
+		return RTS;
+	}
+	if (fcb->device == 0x0) {
+		fprintf(stderr, "NOT_OUTPUT_FILE\n");
+		cpu->sr |= carry_flag;
+		cpu->ac = 0x0;
+		return RTS;
+	}
+	if (fcb->device == 0x3) {
+		output_device = 0x3;
+		cpu->sr &= (~carry_flag);
+		return RTS;
+	}
+	fprintf(stderr, "DEVICE_NOT_PRESENT\n");
+	cpu->sr |= carry_flag;
+	cpu->ac = 0x5;
 	return RTS;
 }
 
