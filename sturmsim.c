@@ -38,12 +38,16 @@ static void clean_up(void)
 	if (sim_ctx.program_file_name) free(sim_ctx.program_file_name);
 }
 
-static void exit_with_usage_msg(char *msg)
+static void print_usage_msg()
 {
-	fprintf(stderr, "%s\n", msg);
-	fprintf(stderr, "usage: sturmsim [--lower-case] <file>\n");
+	const char *usage_msg = "Usage: sturmsim [options] file\n\
+ Long options:\n\
+  --execute-address=<value>		Specify execution start address. Default value is read from the beginning of PRG file.\n\
+  --help				Display available options.\n\
+  --lower-case				Enable lower case (shifted) PETSCII.\n\
+";
+	printf("%s", usage_msg);
 	clean_up();
-	exit(1);
 }
 
 static void exit_with_msg(char *msg)
@@ -56,6 +60,7 @@ static void exit_with_msg(char *msg)
 
 static void parse_parameters(int argc, char *argv[])
 {
+	const char *execution_address_switch = "--execution-address=";
 	sim_ctx.program_file_name = NULL;
 	sim_ctx.lower_case = false;
 
@@ -64,13 +69,22 @@ static void parse_parameters(int argc, char *argv[])
 			if (sim_ctx.program_file_name == NULL)
 				sim_ctx.program_file_name = strdup(argv[i]);
 			else
-				exit_with_usage_msg("Too many file names!");
-		} else if (strcmp(argv[i], "--lower-case") == 0)
+				exit_with_msg("Too many file names!");
+		} else if (strcmp(argv[i], "--lower-case") == 0) {
 			sim_ctx.lower_case = true;
-		else exit_with_usage_msg("Unknown option");
+		} else if (strcmp(argv[i], "--help") == 0) {
+			print_usage_msg();
+			clean_up();
+			exit(0);
+		} else if (strncmp(argv[i], execution_address_switch, strlen(execution_address_switch)) == 0) {
+			sim_ctx.execution_address = true;
+			char substring[10];
+			strncpy(substring, argv[i] + strlen(execution_address_switch), 6);
+			sim_ctx.execution_address_value = (unsigned short) strtoul(substring, NULL, 16);
+		} else exit_with_msg("Unknown option");
 	}	
 	if (sim_ctx.program_file_name == NULL)
-		exit_with_usage_msg("File name is missing!");
+		exit_with_msg("File name is missing!");
 }
 
 u16 load_program(char *file_name)
@@ -102,10 +116,7 @@ u16 load_program(char *file_name)
 		exit_with_msg("Cannot read start address.");
 	}
 	fclose(program);
-	// printf("start_address: %04x\n", start_address);
-	// printf("end_address: %04x\n", address-1);
-	return 0x80d;
-	// return start_address;
+	return start_address;
 
 }
 
@@ -118,7 +129,7 @@ int main(int argc, char *argv[])
 	init_memory();
 	init_kernal();
 	load_address = load_program(sim_ctx.program_file_name);
-	cpu.pc = load_address;
+	cpu.pc = sim_ctx.execution_address ? sim_ctx.execution_address_value : load_address;
 	clean_up();
 	execute_program(&sim_ctx, &cpu);
 	return 0;

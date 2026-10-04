@@ -28,6 +28,8 @@
 typedef struct {
 	char *program_file_name;
 	bool lower_case;
+	bool execution_address;
+	unsigned short execution_address_value;
 } SIM_CTX;
 
 

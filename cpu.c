@@ -343,9 +343,9 @@ void execute_instruction(SIM_CTX *sim, CPU_CTX *cpu)
 		case 0xffcc:
 			instruction = kernal_clrchn(cpu);
 			break;
-//		case 0xffcf:
-//			instruction = kernal_chrin(cpu);
-//			break;
+		case 0xffcf:
+			instruction = kernal_chrin(cpu);
+			break;
 		case 0xffd2:
 			instruction = kernal_chrout(cpu, sim->lower_case);
 			break;
