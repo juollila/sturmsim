@@ -27,6 +27,7 @@
 
 #include "cpu.h"
 #include "kernal.h"
+#include "sturmsim.h"
 
 u8 mem[MEM_SIZE];
 
@@ -306,7 +307,7 @@ static void print_registers(CPU_CTX *cpu)
 	printf("; %04x %02x %02x %02x %02x %02x\n", cpu->pc, cpu->sr, cpu->ac, cpu->xr, cpu->yr, cpu->sp);
 }
 
-void execute_instruction(CPU_CTX *cpu)
+void execute_instruction(SIM_CTX *sim, CPU_CTX *cpu)
 {
 	u8 instruction, zp;
 	i8 offset;
@@ -346,7 +347,7 @@ void execute_instruction(CPU_CTX *cpu)
 //			instruction = kernal_chrin(cpu);
 //			break;
 		case 0xffd2:
-			instruction = kernal_chrout(cpu);
+			instruction = kernal_chrout(cpu, sim->lower_case);
 			break;
 //		case 0xfff0:
 //			instruction = 0x60; /* plot */
@@ -953,9 +954,9 @@ void execute_instruction(CPU_CTX *cpu)
 	
 }
 
-void execute_program(CPU_CTX *cpu)
+void execute_program(SIM_CTX *sim, CPU_CTX *cpu)
 {
 	while (!cpu->halt) {
-		execute_instruction(cpu);
+		execute_instruction(sim, cpu);
 	}
 }

@@ -43,6 +43,6 @@ extern u8 kernal_open(CPU_CTX *cpu);	// 0xffc0
 extern u8 kernal_chkout(CPU_CTX *cpu);	// 0xffc9
 extern u8 kernal_clrchn(CPU_CTX *cpu);	// 0xffcc
 extern u8 kernal_chrin(CPU_CTX *cpu);	// 0xffcf
-extern u8 kernal_chrout(CPU_CTX *cpu);	// 0xffd2
+extern u8 kernal_chrout(CPU_CTX *cpu, bool lower);	// 0xffd2
 
 #endif /* KERNAL_H */

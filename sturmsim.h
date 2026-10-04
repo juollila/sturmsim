@@ -22,8 +22,14 @@
  * 
  */
 
+#ifndef SIM_H
+#define SIM_H
+
 typedef struct {
 	char *program_file_name;
-} CTX;
+	bool lower_case;
+} SIM_CTX;
 
+
+#endif /* SIM_H */
 

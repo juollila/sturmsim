@@ -31,17 +31,17 @@
 #include "sturmsim.h"
 #include "kernal.h"
 
-CTX ctx;
+SIM_CTX sim_ctx;
 
 static void clean_up(void)
 {
-	if (ctx.program_file_name) free(ctx.program_file_name);
+	if (sim_ctx.program_file_name) free(sim_ctx.program_file_name);
 }
 
 static void exit_with_usage_msg(char *msg)
 {
 	fprintf(stderr, "%s\n", msg);
-	fprintf(stderr, "usage: sturmsim <file>\n");
+	fprintf(stderr, "usage: sturmsim [--lower-case] <file>\n");
 	clean_up();
 	exit(1);
 }
@@ -56,12 +56,21 @@ static void exit_with_msg(char *msg)
 
 static void parse_parameters(int argc, char *argv[])
 {
-	ctx.program_file_name = NULL;
+	sim_ctx.program_file_name = NULL;
+	sim_ctx.lower_case = false;
 
-	if(argc < 2) {
+	for (int i = 1; i < argc; i++) {
+		if (argv[i][0] != '-') {
+			if (sim_ctx.program_file_name == NULL)
+				sim_ctx.program_file_name = strdup(argv[i]);
+			else
+				exit_with_usage_msg("Too many file names!");
+		} else if (strcmp(argv[i], "--lower-case") == 0)
+			sim_ctx.lower_case = true;
+		else exit_with_usage_msg("Unknown option");
+	}	
+	if (sim_ctx.program_file_name == NULL)
 		exit_with_usage_msg("File name is missing!");
-	}
-	ctx.program_file_name = strdup(argv[1]);
 }
 
 u16 load_program(char *file_name)
@@ -108,9 +117,9 @@ int main(int argc, char *argv[])
 	init_cpu(&cpu);
 	init_memory();
 	init_kernal();
-	load_address = load_program(ctx.program_file_name);
+	load_address = load_program(sim_ctx.program_file_name);
 	cpu.pc = load_address;
 	clean_up();
-	execute_program(&cpu);
+	execute_program(&sim_ctx, &cpu);
 	return 0;
 }

@@ -22,7 +22,8 @@
  * 
  */
 
-#include "stdbool.h"
+#include <stdbool.h>
+#include "sturmsim.h"
 
 #ifndef CPU_H
 #define CPU_H
@@ -92,7 +93,7 @@ static u8 ror(CPU_CTX *cpu, u8 i);
 static void bit(CPU_CTX *cpu, u8 i);
 static void brk_inst(CPU_CTX *cpu);
 static void print_registers(CPU_CTX *cpu);
-void execute_instruction(CPU_CTX *cpu);
-void execute_program(CPU_CTX *cpu);
+void execute_instruction(SIM_CTX *sim, CPU_CTX *cpu);
+void execute_program(SIM_CTX *sim, CPU_CTX *cpu);
 
 #endif /* CPU_H */

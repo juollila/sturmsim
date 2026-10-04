@@ -100,7 +100,7 @@ u8 kernal_open(CPU_CTX *cpu)
 	new->device = lfs_device;
 	new->sa = lfs_sa;
 	new->open = true;
-	printf("kernal_open: %d, %d, %d\n", new->file, new->device, new->sa);
+	//printf("kernal_open: %d, %d, %d\n", new->file, new->device, new->sa);
 	cpu->sr &= (~carry_flag);
 	return RTS;
 }
@@ -108,7 +108,7 @@ u8 kernal_open(CPU_CTX *cpu)
 u8 kernal_chkout(CPU_CTX *cpu)
 {
 	u8 file = cpu->xr;
-	printf("kernal_chkout: %d\n", file);
+	//printf("kernal_chkout: %d\n", file);
 	FCB_CTX *fcb = find_fcb(file);
 	if (fcb == NULL || fcb->open == false) {
 		fprintf(stderr, "FILE_NOT_OPEN\n");
@@ -160,11 +160,20 @@ u8 kernal_chrin(CPU_CTX *cpu)
 }
 
 
-u8 kernal_chrout(CPU_CTX *cpu)
+u8 kernal_chrout(CPU_CTX *cpu, bool lower)
 {
 	u8 i = cpu->ac;
 	if (i == 0xd) i = '\n';
-	if (i >= 0x60) i = '.'; 
+	if (lower == false && i >= 0x60) i = '.';
+	if (lower == true) {
+		if (i>=0x41 && i<=0x5a)
+			i += 0x20;
+		else if (i>=0x61 && i<=0x7a)
+			i -= 0x20;
+		else if (i>=0xc1 && i<=0xda)
+			i &= 0x7f;
+	}
+	if (lower == true && i >= 0x80) i = '.';
 	putchar(i);
 	cpu->sr &= (~carry_flag);
 	return RTS;

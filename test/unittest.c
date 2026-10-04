@@ -1,5 +1,7 @@
 #include "acutest.h"
 #include "../cpu.h"
+#include "../sturmsim.h"
+
 
 void test_zero_flag(void)
 {
@@ -244,6 +246,7 @@ void test_sbc_bcd_flags(void)
 void test_brk(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	/* default CVINB */
 	init_cpu(&cpu);
 	init_memory();
@@ -253,7 +256,7 @@ void test_brk(void)
 	mem[0x110] = 0x0; /* brk */
 	cpu.pc = 0x110;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.halt == true);
 	TEST_CHECK(cpu.pc == 0x111);
 	TEST_CHECK(cpu.sr == break_flag);
@@ -275,7 +278,7 @@ void test_brk(void)
 	mem[0x110] = 0x0; /* brk */
 	cpu.pc = 0x110;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.halt == false);
 	TEST_CHECK(cpu.pc == 0x8000);
 	TEST_CHECK(cpu.sr == break_flag);
@@ -291,6 +294,7 @@ void test_brk(void)
 void test_ora_zp_x_ind(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.xr = 0x10;
 	mem[0x100] = 0x01; /* ora ($10, x) */
@@ -301,7 +305,7 @@ void test_ora_zp_x_ind(void)
 	mem[0x20] = 0x00;
 	mem[0x21] = 0x80;
 	mem[0x8000] = 0xf;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.xr == 0x10);
 	TEST_CHECK(cpu.sr == 0x0);
@@ -311,6 +315,7 @@ void test_ora_zp_x_ind(void)
 void test_ora_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x20;
 	mem[0x10] = 0x2;
@@ -318,7 +323,7 @@ void test_ora_zp(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(cpu.ac == 0x22);
@@ -327,13 +332,14 @@ void test_ora_zp(void)
 void test_asl_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x10] = 0x80;
 	mem[0x100] = 0x6; /* asl $10 */
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == (carry_flag | zero_flag));
 	TEST_CHECK(mem[0x10] == 0x0);
@@ -342,11 +348,12 @@ void test_asl_zp(void)
 void test_php(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x8; /* php */
 	cpu.pc = 0x100;
 	cpu.sr = negative_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sp == 0xfe);
 	TEST_CHECK(mem[0x1ff] == (break_flag | one_flag | negative_flag));
@@ -355,13 +362,14 @@ void test_php(void)
 void test_ora_imm(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x09; /* ora #80 */
 	mem[0x101] = 0x80;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
 	cpu.ac = 0x8;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x88);
@@ -370,12 +378,13 @@ void test_ora_imm(void)
 void test_asl(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xa; /* asl a */
 	cpu.ac = 0x80;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == (carry_flag | zero_flag));
 	TEST_CHECK(cpu.ac == 0x0);
@@ -384,6 +393,7 @@ void test_asl(void)
 void test_ora_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x0d; /* ora $1409 */
 	mem[0x101] = 0x09;
@@ -392,7 +402,7 @@ void test_ora_abs(void)
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
 	cpu.ac = 0x8;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x88);
@@ -401,6 +411,7 @@ void test_ora_abs(void)
 void test_asl_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x0e; /* asl $1409 */
 	mem[0x101] = 0x09;
@@ -408,7 +419,7 @@ void test_asl_abs(void)
 	mem[0x1409] = 0x81;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == carry_flag);
 	TEST_CHECK(mem[0x1409] == 0x2);
@@ -417,16 +428,17 @@ void test_asl_abs(void)
 void test_bpl(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x10; /* bpl */
 	mem[0x101] = 0x20; /* offset */
 	cpu.pc = 0x100;
 	cpu.sr = negative_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x122);
 }
 
@@ -434,6 +446,7 @@ void test_bpl(void)
 void test_ora_zp_y_ind(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.yr = 0x10;
 	mem[0x100] = 0x11; /* ora ($20), y */
@@ -444,7 +457,7 @@ void test_ora_zp_y_ind(void)
 	mem[0x20] = 0x00;
 	mem[0x21] = 0x80;
 	mem[0x8010] = 0xf0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.yr == 0x10);
 	TEST_CHECK(cpu.sr == negative_flag);
@@ -454,6 +467,7 @@ void test_ora_zp_y_ind(void)
 void test_ora_zp_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x08;
 	cpu.xr = 0x10;
@@ -462,7 +476,7 @@ void test_ora_zp_x(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x88);
@@ -471,6 +485,7 @@ void test_ora_zp_x(void)
 void test_asl_zp_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.xr = 0x10;
 	mem[0x20] = 0x40;
@@ -478,7 +493,7 @@ void test_asl_zp_x(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(mem[0x20] == 0x80);
@@ -487,11 +502,12 @@ void test_asl_zp_x(void)
 void test_clc(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x18; /* clc */
 	cpu.pc = 0x100;
 	cpu.sr = (negative_flag | carry_flag);
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == negative_flag);
 }
@@ -499,6 +515,7 @@ void test_clc(void)
 void test_ora_abs_y(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x19; /* ora $1001,y */
 	mem[0x101] = 0x01;
@@ -508,7 +525,7 @@ void test_ora_abs_y(void)
 	cpu.sr = 0x0;
 	cpu.yr = 0x10;
 	cpu.ac = 0x70;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == 0x0);
 	TEST_CHECK(cpu.ac == 0x7f);
@@ -517,6 +534,7 @@ void test_ora_abs_y(void)
 void test_ora_abs_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x1d; /* ora $1400,x */
 	mem[0x101] = 0x00;
@@ -526,7 +544,7 @@ void test_ora_abs_x(void)
 	cpu.sr = 0x0;
 	cpu.ac = 0x8;
 	cpu.xr = 0x9;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x88);
@@ -535,6 +553,7 @@ void test_ora_abs_x(void)
 void test_asl_abs_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x1e; /* asl $1400,x */
 	mem[0x101] = 0x00;
@@ -543,7 +562,7 @@ void test_asl_abs_x(void)
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
 	cpu.xr = 0x9;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(mem[0x1409] == 0x28);
@@ -552,12 +571,13 @@ void test_asl_abs_x(void)
 void test_jsr_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x20; /* jsr */
 	mem[0x101] = 0x22; /* address */
 	mem[0x102] = 0xfd;
 	cpu.pc = 0x100;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0xfd22);
 	TEST_CHECK(mem[0x1ff] == 0x01);
 	TEST_CHECK(mem[0x1fe] == 0x02);
@@ -567,6 +587,7 @@ void test_jsr_abs(void)
 void test_and_zp_x_ind(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.xr = 0x10;
 	mem[0x100] = 0x21; /* and ($10, x) */
@@ -577,7 +598,7 @@ void test_and_zp_x_ind(void)
 	mem[0x20] = 0x00;
 	mem[0x21] = 0x80;
 	mem[0x8000] = 0xf;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.xr == 0x10);
 	TEST_CHECK(cpu.sr == 0x0);
@@ -587,6 +608,7 @@ void test_and_zp_x_ind(void)
 void test_bit_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x24; /* bit zp */
 	mem[0x101] = 0x20;
@@ -594,7 +616,7 @@ void test_bit_zp(void)
 	cpu.pc = 0x100;
 	cpu.ac = 0x80;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == (zero_flag | overflow_flag));
 	mem[0x100] = 0x24; /* bit zp */
@@ -603,7 +625,7 @@ void test_bit_zp(void)
 	cpu.pc = 0x100;
 	cpu.ac = 0x80;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 }
@@ -611,6 +633,7 @@ void test_bit_zp(void)
 void test_and_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x08;
 	mem[0x10] = 0x80;
@@ -618,7 +641,7 @@ void test_and_zp(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == zero_flag);
 	TEST_CHECK(cpu.ac == 0x0);
@@ -627,13 +650,14 @@ void test_and_zp(void)
 void test_rol_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x10] = 0x81;
 	mem[0x100] = 0x26; /* rol $10 */
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == carry_flag);
 	TEST_CHECK(mem[0x10] == 0x2);
@@ -642,12 +666,13 @@ void test_rol_zp(void)
 void test_plp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x28; /* plp */
 	cpu.pc = 0x100;
 	cpu.sp = 0xfe;
 	mem[0x1ff] = (negative_flag | carry_flag);
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sp == 0xff);
 	TEST_CHECK(cpu.sr == (negative_flag | carry_flag));
@@ -656,13 +681,14 @@ void test_plp(void)
 void test_and_imm(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x29; /* and #80 */
 	mem[0x101] = 0x80;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
 	cpu.ac = 0x8;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == zero_flag);
 	TEST_CHECK(cpu.ac == 0x0);
@@ -671,6 +697,7 @@ void test_and_imm(void)
 void test_and_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x2d; /* and $1409 */
 	mem[0x101] = 0x09;
@@ -679,7 +706,7 @@ void test_and_abs(void)
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
 	cpu.ac = 0x8;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(cpu.ac == 0x08);
@@ -688,6 +715,7 @@ void test_and_abs(void)
 void test_rol_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x2e; /* rol $1409 */
 	mem[0x101] = 0x09;
@@ -695,7 +723,7 @@ void test_rol_abs(void)
 	mem[0x1409] = 0x81;
 	cpu.pc = 0x100;
 	cpu.sr = carry_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == carry_flag);
 	TEST_CHECK(mem[0x1409] == 0x3);
@@ -704,12 +732,13 @@ void test_rol_abs(void)
 void test_rol(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x2a; /* rol a */
 	cpu.ac = 0x40;
 	cpu.pc = 0x100;
 	cpu.sr = carry_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x81);
@@ -718,6 +747,7 @@ void test_rol(void)
 void test_bit_abs(void)
 {
         CPU_CTX cpu;
+	SIM_CTX sim;
         init_cpu(&cpu);
         mem[0x100] = 0x2c; /* bit $2001 */
         mem[0x101] = 0x01;
@@ -726,7 +756,7 @@ void test_bit_abs(void)
         cpu.pc = 0x100;
         cpu.ac = 0x80;
         cpu.sr = 0x0;
-        execute_instruction(&cpu);
+        execute_instruction(&sim, &cpu);
         TEST_CHECK(cpu.pc == 0x103);
         TEST_CHECK(cpu.sr == (zero_flag | overflow_flag));
         mem[0x100] = 0x2c; /* bit $2001 */
@@ -736,7 +766,7 @@ void test_bit_abs(void)
         cpu.pc = 0x100;
         cpu.ac = 0x80;
         cpu.sr = 0x0;
-        execute_instruction(&cpu);
+        execute_instruction(&sim, &cpu);
         TEST_CHECK(cpu.pc == 0x103);
         TEST_CHECK(cpu.sr == negative_flag);
 }  
@@ -744,22 +774,24 @@ void test_bit_abs(void)
 void test_bmi(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x30; /* bmi */
 	mem[0x101] = 0xfe; /* offset */
 	cpu.pc = 0x100;
 	cpu.sr = negative_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x100);
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 }
 
 void test_and_zp_y_ind(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.yr = 0x10;
 	mem[0x100] = 0x31; /* and ($20), y */
@@ -770,7 +802,7 @@ void test_and_zp_y_ind(void)
 	mem[0x20] = 0x00;
 	mem[0x21] = 0x80;
 	mem[0x8010] = 0xf0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.yr == 0x10);
 	TEST_CHECK(cpu.sr == 0);
@@ -780,6 +812,7 @@ void test_and_zp_y_ind(void)
 void test_and_zp_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x88;
 	cpu.xr = 0x10;
@@ -788,7 +821,7 @@ void test_and_zp_x(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x80);
@@ -798,6 +831,7 @@ void test_and_zp_x(void)
 void test_rol_zp_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.xr = 0x10;
 	mem[0x20] = 0x40;
@@ -805,7 +839,7 @@ void test_rol_zp_x(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = carry_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(mem[0x20] == 0x81);
@@ -814,11 +848,12 @@ void test_rol_zp_x(void)
 void test_sec(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x38; /* sec */
 	cpu.pc = 0x100;
 	cpu.sr = zero_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == (zero_flag | carry_flag));
 }
@@ -826,6 +861,7 @@ void test_sec(void)
 void test_and_abs_y(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x39; /* and $1001,y */
 	mem[0x101] = 0x01;
@@ -835,7 +871,7 @@ void test_and_abs_y(void)
 	cpu.sr = 0x0;
 	cpu.yr = 0x10;
 	cpu.ac = 0x80;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x80);
@@ -844,6 +880,7 @@ void test_and_abs_y(void)
 void test_and_abs_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x3d; /* and $1400,x */
 	mem[0x101] = 0x00;
@@ -853,7 +890,7 @@ void test_and_abs_x(void)
 	cpu.sr = 0x0;
 	cpu.xr = 0x9;
 	cpu.ac = 0x80;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x80);
@@ -862,6 +899,7 @@ void test_and_abs_x(void)
 void test_rol_abs_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x3e; /* asl $1400,x */
 	mem[0x101] = 0x00;
@@ -870,7 +908,7 @@ void test_rol_abs_x(void)
 	cpu.pc = 0x100;
 	cpu.sr = carry_flag;
 	cpu.xr = 0x9;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(mem[0x1409] == 0x29);
@@ -879,6 +917,7 @@ void test_rol_abs_x(void)
 void test_rti(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x40; /* rti */
 	cpu.pc = 0x100;
@@ -887,7 +926,7 @@ void test_rti(void)
 	mem[0x1fd] = (carry_flag | break_flag);
 	mem[0x1fe] = 0x22;
 	mem[0x1ff] = 0xfd;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0xfd22);
 	TEST_CHECK(cpu.sr == carry_flag);
 	TEST_CHECK(cpu.sp == 0xff);
@@ -896,6 +935,7 @@ void test_rti(void)
 void test_eor_zp_x_ind(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.xr = 0x10;
 	mem[0x100] = 0x41; /* eor ($10, x) */
@@ -906,7 +946,7 @@ void test_eor_zp_x_ind(void)
 	mem[0x20] = 0x00;
 	mem[0x21] = 0x80;
 	mem[0x8000] = 0xf;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.xr == 0x10);
 	TEST_CHECK(cpu.sr == 0x0);
@@ -916,6 +956,7 @@ void test_eor_zp_x_ind(void)
 void test_eor_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x18;
 	mem[0x10] = 0x80;
@@ -923,7 +964,7 @@ void test_eor_zp(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x98);
@@ -932,13 +973,14 @@ void test_eor_zp(void)
 void test_lsr_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x10] = 0x81;
 	mem[0x100] = 0x46; /* lsr $10 */
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == carry_flag);
 	TEST_CHECK(mem[0x10] == 0x40);
@@ -947,12 +989,13 @@ void test_lsr_zp(void)
 void test_pha(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x48; /* pha */
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
 	cpu.ac = 0x80;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sp == 0xfe);
 	TEST_CHECK(mem[0x1ff] == 0x80);
@@ -962,13 +1005,14 @@ void test_pha(void)
 void test_eor_imm(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x49; /* eor #80 */
 	mem[0x101] = 0x80;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
 	cpu.ac = 0x88;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(cpu.ac == 0x8);
@@ -977,12 +1021,13 @@ void test_eor_imm(void)
 void test_lsr(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x4a; /* lsr a */
 	cpu.ac = 0x1;
 	cpu.pc = 0x100;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == (carry_flag | zero_flag));
 	TEST_CHECK(cpu.ac == 0x0);
@@ -991,12 +1036,13 @@ void test_lsr(void)
 void test_jmp_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x4c; /* jmp $fd22 */
 	mem[0x101] = 0x22;
 	mem[0x102] = 0xfd;
 	cpu.pc = 0x100;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0xfd22);
 	TEST_CHECK(cpu.sp == 0xff);
 }
@@ -1004,6 +1050,7 @@ void test_jmp_abs(void)
 void test_eor_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x4d; /* eor $1409 */
 	mem[0x101] = 0x09;
@@ -1012,7 +1059,7 @@ void test_eor_abs(void)
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
 	cpu.ac = 0x8f;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x80);
@@ -1021,6 +1068,7 @@ void test_eor_abs(void)
 void test_lsr_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x4e; /* lsr $1409 */
 	mem[0x101] = 0x09;
@@ -1028,7 +1076,7 @@ void test_lsr_abs(void)
 	mem[0x1409] = 0x81;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == carry_flag);
 	TEST_CHECK(mem[0x1409] == 0x40);
@@ -1037,22 +1085,24 @@ void test_lsr_abs(void)
 void test_bvc(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x50; /* bvc */
 	mem[0x101] = 0xfd; /* offset */
 	cpu.pc = 0x100;
 	cpu.sr = overflow_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0xff);
 }
 
 void test_eor_zp_y_ind(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.yr = 0x10;
 	mem[0x100] = 0x51; /* and ($20), y */
@@ -1063,7 +1113,7 @@ void test_eor_zp_y_ind(void)
 	mem[0x20] = 0x00;
 	mem[0x21] = 0x80;
 	mem[0x8010] = 0xf0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.yr == 0x10);
 	TEST_CHECK(cpu.sr == negative_flag);
@@ -1073,6 +1123,7 @@ void test_eor_zp_y_ind(void)
 void test_eor_zp_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x88;
 	cpu.xr = 0x10;
@@ -1081,7 +1132,7 @@ void test_eor_zp_x(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(cpu.ac == 0x8);
@@ -1090,6 +1141,7 @@ void test_eor_zp_x(void)
 void test_lsr_zp_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.xr = 0x10;
 	mem[0x20] = 0x40;
@@ -1097,7 +1149,7 @@ void test_lsr_zp_x(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = carry_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(mem[0x20] == 0x20);
@@ -1106,11 +1158,12 @@ void test_lsr_zp_x(void)
 void test_cli(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x58; /* cli */
 	cpu.pc = 0x100;
 	cpu.sr = (negative_flag | interrupt_flag);
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == negative_flag);
 }
@@ -1118,6 +1171,7 @@ void test_cli(void)
 void test_eor_abs_y(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x59; /* eor $1001,y */
 	mem[0x101] = 0x01;
@@ -1127,7 +1181,7 @@ void test_eor_abs_y(void)
 	cpu.sr = 0x0;
 	cpu.yr = 0x10;
 	cpu.ac = 0x8f;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x80);
@@ -1136,6 +1190,7 @@ void test_eor_abs_y(void)
 void test_eor_abs_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x5d; /* eor $1400,x */
 	mem[0x101] = 0x00;
@@ -1145,7 +1200,7 @@ void test_eor_abs_x(void)
 	cpu.sr = 0x0;
 	cpu.xr = 0x9;
 	cpu.ac = 0x8f;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x80);
@@ -1154,6 +1209,7 @@ void test_eor_abs_x(void)
 void test_lsr_abs_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x5e; /* lsr $1400,x */
 	mem[0x101] = 0x00;
@@ -1162,7 +1218,7 @@ void test_lsr_abs_x(void)
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
 	cpu.xr = 0x9;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == carry_flag);
 	TEST_CHECK(mem[0x1409] == 0x40);
@@ -1171,13 +1227,14 @@ void test_lsr_abs_x(void)
 void test_rts(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x60; /* rts */
 	cpu.sp = 0xfd; /* set stack pointer */
 	mem[0x1fe] = 0x21; /* address -1 in stack */
 	mem[0x1ff] = 0xfd;
 	cpu.pc = 0x100;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0xfd22);
 	TEST_CHECK(cpu.sp == 0xff);
 }
@@ -1185,6 +1242,7 @@ void test_rts(void)
 void test_adc_zp_x_ind(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.xr = 0x10;
 	mem[0x100] = 0x61; /* adc ($10, x) */
@@ -1195,7 +1253,7 @@ void test_adc_zp_x_ind(void)
 	mem[0x20] = 0x00;
 	mem[0x21] = 0x80;
 	mem[0x8000] = 0xf;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == 0x0);
 	TEST_CHECK(cpu.ac == 0x65);
@@ -1204,6 +1262,7 @@ void test_adc_zp_x_ind(void)
 void test_adc_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x18;
 	mem[0x10] = 0x80;
@@ -1211,7 +1270,7 @@ void test_adc_zp(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = carry_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x99);
@@ -1220,13 +1279,14 @@ void test_adc_zp(void)
 void test_ror_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x10] = 0x81;
 	mem[0x100] = 0x66; /* ror $10 */
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = carry_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == (negative_flag | carry_flag));
 	TEST_CHECK(mem[0x10] == 0xc0);
@@ -1235,13 +1295,14 @@ void test_ror_zp(void)
 void test_pla(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x68; /* pla */
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
 	cpu.sp = 0xfe;
 	mem[0x1ff] = 0x80;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sp == 0xff);
 	TEST_CHECK(cpu.ac == 0x80);
@@ -1251,13 +1312,14 @@ void test_pla(void)
 void test_adc_imm(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x69; /* adc #80 */
 	mem[0x101] = 0x80;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
 	cpu.ac = 0x8;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x88);
@@ -1266,12 +1328,13 @@ void test_adc_imm(void)
 void test_ror(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x6a; /* ror a */
 	cpu.ac = 0x80;
 	cpu.pc = 0x100;
 	cpu.sr = carry_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0xc0);
@@ -1280,6 +1343,7 @@ void test_ror(void)
 void test_jmp_ind(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x6c; /* jmp ($20ff) */
 	mem[0x101] = 0xff;
@@ -1287,7 +1351,7 @@ void test_jmp_ind(void)
 	mem[0x20ff] = 0x22;
 	mem[0x2000] = 0xfd;
 	cpu.pc = 0x100;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0xfd22);
 	TEST_CHECK(cpu.sp == 0xff);
 	mem[0x100] = 0x6c; /* jmp ($8000) */
@@ -1296,7 +1360,7 @@ void test_jmp_ind(void)
 	mem[0x8000] = 0x10;
 	mem[0x8001] = 0x90;
 	cpu.pc = 0x100;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x9010);
 	TEST_CHECK(cpu.sp == 0xff);
 }
@@ -1304,6 +1368,7 @@ void test_jmp_ind(void)
 void test_adc_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x18;
 	mem[0x100] = 0x6d; /* adc $1409 */
@@ -1313,7 +1378,7 @@ void test_adc_abs(void)
 	cpu.pc = 0x100;
 	cpu.ac = 0x40;
 	cpu.sr = carry_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == (negative_flag | overflow_flag));
 	TEST_CHECK(cpu.ac == 0x80);
@@ -1322,6 +1387,7 @@ void test_adc_abs(void)
 void test_ror_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x6e; /* ror $1409 */
 	mem[0x101] = 0x09;
@@ -1329,7 +1395,7 @@ void test_ror_abs(void)
 	mem[0x1409] = 0x81;
 	cpu.pc = 0x100;
 	cpu.sr = carry_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == (negative_flag | carry_flag));
 	TEST_CHECK(mem[0x1409] == 0xc0);
@@ -1338,22 +1404,24 @@ void test_ror_abs(void)
 void test_bvs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x70; /* bvs */
 	mem[0x101] = 0xfd; /* offset */
 	cpu.pc = 0x100;
 	cpu.sr = overflow_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0xff);
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 }
 
 void test_adc_zp_y_ind(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.yr = 0x10;
 	mem[0x100] = 0x71; /* adc ($20), y */
@@ -1364,7 +1432,7 @@ void test_adc_zp_y_ind(void)
 	mem[0x20] = 0x00;
 	mem[0x21] = 0x80;
 	mem[0x8010] = 0xf0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.yr == 0x10);
 	TEST_CHECK(cpu.sr == carry_flag);
@@ -1374,6 +1442,7 @@ void test_adc_zp_y_ind(void)
 void test_adc_zp_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x88;
 	cpu.xr = 0x10;
@@ -1382,7 +1451,7 @@ void test_adc_zp_x(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == (carry_flag | overflow_flag));
 	TEST_CHECK(cpu.ac == 0x8);
@@ -1391,6 +1460,7 @@ void test_adc_zp_x(void)
 void test_ror_zp_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.xr = 0x10;
 	mem[0x20] = 0x0;
@@ -1398,7 +1468,7 @@ void test_ror_zp_x(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == zero_flag);
 	TEST_CHECK(mem[0x20] == 0x0);
@@ -1407,11 +1477,12 @@ void test_ror_zp_x(void)
 void test_sei(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x78; /* sei */
 	cpu.pc = 0x100;
 	cpu.sr = zero_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == (zero_flag | interrupt_flag));
 }
@@ -1419,6 +1490,7 @@ void test_sei(void)
 void test_adc_abs_y(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x79; /* adc $1001,y */
 	mem[0x101] = 0x01;
@@ -1428,7 +1500,7 @@ void test_adc_abs_y(void)
 	cpu.sr = 0x0;
 	cpu.yr = 0x10;
 	cpu.ac = 0x8f;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x9e);
@@ -1437,6 +1509,7 @@ void test_adc_abs_y(void)
 void test_adc_abs_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x7d; /* adc $1400,x */
 	mem[0x101] = 0x00;
@@ -1446,7 +1519,7 @@ void test_adc_abs_x(void)
 	cpu.sr = 0x0;
 	cpu.xr = 0x9;
 	cpu.ac = 0x8f;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x9e);
@@ -1455,6 +1528,7 @@ void test_adc_abs_x(void)
 void test_ror_abs_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x7e; /* ror $1400,x */
 	mem[0x101] = 0x00;
@@ -1463,7 +1537,7 @@ void test_ror_abs_x(void)
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
 	cpu.xr = 0x9;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(mem[0x1409] == 0x40);
@@ -1472,6 +1546,7 @@ void test_ror_abs_x(void)
 void test_sta_zp_x_ind(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.xr = 0x10;
 	mem[0x100] = 0x81; /* sta ($10, x) */
@@ -1482,7 +1557,7 @@ void test_sta_zp_x_ind(void)
 	mem[0x20] = 0x00;
 	mem[0x21] = 0x80;
 	mem[0x8000] = 0xf;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == 0x0);
 	TEST_CHECK(mem[0x8000] == 0x55);
@@ -1491,13 +1566,14 @@ void test_sta_zp_x_ind(void)
 void test_sty_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.yr = 0x5a;
 	mem[0x100] = 0x84; /* sty $10 */
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == 0x0);
 	TEST_CHECK(mem[0x10] == 0x5a);
@@ -1506,13 +1582,14 @@ void test_sty_zp(void)
 void test_sta_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x18;
 	mem[0x100] = 0x85; /* sta $10 */
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(mem[0x10] == 0x18);
@@ -1521,13 +1598,14 @@ void test_sta_zp(void)
 void test_stx_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x86; /* stx $10 */
 	mem[0x101] = 0x10;
 	cpu.xr = 0x81;
 	cpu.pc = 0x100;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(mem[0x10] == 0x81);
@@ -1536,12 +1614,13 @@ void test_stx_zp(void)
 void test_dey(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x88; /* dey */
 	cpu.pc = 0x100;
 	cpu.sr = 0;
 	cpu.yr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.yr == 0xff);
@@ -1550,13 +1629,14 @@ void test_dey(void)
 void test_txa(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x8a; /* txa */
 	cpu.pc = 0x100;
 	cpu.ac = 0;
 	cpu.xr = 0x80;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x80);
@@ -1565,6 +1645,7 @@ void test_txa(void)
 void test_sty_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x8c; /* sty $2010 */
 	mem[0x101] = 0x10;
@@ -1572,7 +1653,7 @@ void test_sty_abs(void)
 	cpu.pc = 0x100;
 	cpu.yr = 0x80;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == 0x0);
 	TEST_CHECK(mem[0x2010] == 0x80);
@@ -1581,6 +1662,7 @@ void test_sty_abs(void)
 void test_sta_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x18;
 	mem[0x100] = 0x8d; /* sta $1409 */
@@ -1590,7 +1672,7 @@ void test_sta_abs(void)
 	cpu.pc = 0x100;
 	cpu.sr = 0;
 	cpu.ac = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(mem[0x1409] == 0x0);
@@ -1599,6 +1681,7 @@ void test_sta_abs(void)
 void test_stx_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x8e; /* stx $1409 */
 	mem[0x101] = 0x09;
@@ -1607,7 +1690,7 @@ void test_stx_abs(void)
 	cpu.xr = 0x81;
 	cpu.pc = 0x100;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(mem[0x1409] == 0x81);
@@ -1616,22 +1699,24 @@ void test_stx_abs(void)
 void test_bcc(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x90; /* bcc */
 	mem[0x101] = 0x4e; /* offset */
 	cpu.pc = 0x100;
 	cpu.sr = carry_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x150);
 }
 
 void test_sta_zp_y_ind(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.yr = 0x10;
 	mem[0x100] = 0x91; /* sta ($20), y */
@@ -1642,7 +1727,7 @@ void test_sta_zp_y_ind(void)
 	mem[0x20] = 0x00;
 	mem[0x21] = 0x80;
 	mem[0x8010] = 0xf0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == 0x0);
 	TEST_CHECK(mem[0x8010] == 0x55);
@@ -1651,6 +1736,7 @@ void test_sta_zp_y_ind(void)
 void test_sty_zp_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.yr = 0x5a;
 	cpu.xr = 0x10;
@@ -1658,7 +1744,7 @@ void test_sty_zp_x(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == 0x0);
 	TEST_CHECK(mem[0x20] == 0x5a);
@@ -1667,6 +1753,7 @@ void test_sty_zp_x(void)
 void test_sta_zp_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x88;
 	cpu.xr = 0x10;
@@ -1674,7 +1761,7 @@ void test_sta_zp_x(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(mem[0x20] == 0x88);
@@ -1683,6 +1770,7 @@ void test_sta_zp_x(void)
 void test_stx_zp_y(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.yr = 0x10;
 	mem[0x100] = 0x96; /* stx $10,y */
@@ -1690,7 +1778,7 @@ void test_stx_zp_y(void)
 	cpu.xr = 0x64;
 	cpu.pc = 0x100;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(mem[0x20] == 0x64);
@@ -1699,13 +1787,14 @@ void test_stx_zp_y(void)
 void test_tya(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x98; /* tya */
 	cpu.pc = 0x100;
 	cpu.sr = 0;
 	cpu.yr = 0;
 	cpu.ac = 0x80;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == zero_flag);
 	TEST_CHECK(cpu.ac == 0x0);
@@ -1714,6 +1803,7 @@ void test_tya(void)
 void test_sta_abs_y(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x99; /* sta $1001,y */
 	mem[0x101] = 0x01;
@@ -1722,7 +1812,7 @@ void test_sta_abs_y(void)
 	cpu.sr = 0x0;
 	cpu.yr = 0x10;
 	cpu.ac = 0x8f;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(mem[0x1011] == 0x8f);
@@ -1731,12 +1821,13 @@ void test_sta_abs_y(void)
 void test_txs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0x9a; /* txs */
 	cpu.pc = 0x100;
 	cpu.xr = 0x80;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == 0x0);
 	TEST_CHECK(cpu.sp == 0x80);
@@ -1745,6 +1836,7 @@ void test_txs(void)
 void test_sta_abs_x(void)
 {
         CPU_CTX cpu;
+	SIM_CTX sim;
         init_cpu(&cpu);
         mem[0x100] = 0x9d; /* sta $1400,x */
         mem[0x101] = 0x00;
@@ -1754,7 +1846,7 @@ void test_sta_abs_x(void)
         cpu.sr = 0x0;
         cpu.xr = 0x9;
         cpu.ac = 0x0;
-        execute_instruction(&cpu);
+        execute_instruction(&sim, &cpu);
         TEST_CHECK(cpu.pc == 0x103);
         TEST_CHECK(cpu.sr == 0);
         TEST_CHECK(mem[0x1409] == 0x0);
@@ -1763,12 +1855,13 @@ void test_sta_abs_x(void)
 void test_ldy_imm(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xa0; /* ldy */
 	mem[0x101] = 0x4e; /* #$4e */
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.yr == 0x4e);
 	TEST_CHECK(cpu.sr == 0);
@@ -1776,7 +1869,7 @@ void test_ldy_imm(void)
 	mem[0x101] = 0x00; /* #$0 */
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.yr == 0x0);
 	TEST_CHECK(cpu.sr == zero_flag);
@@ -1784,7 +1877,7 @@ void test_ldy_imm(void)
 	mem[0x101] = 0xff; /* #$ff */
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.yr == 0xff);
 	TEST_CHECK(cpu.sr == negative_flag);
@@ -1793,6 +1886,7 @@ void test_ldy_imm(void)
 void test_lda_zp_x_ind(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.xr = 0x10;
 	mem[0x100] = 0xa1; /* lda ($10, x) */
@@ -1803,7 +1897,7 @@ void test_lda_zp_x_ind(void)
 	mem[0x20] = 0x00;
 	mem[0x21] = 0x80;
 	mem[0x8000] = 0xff;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0xff);
@@ -1812,12 +1906,13 @@ void test_lda_zp_x_ind(void)
 void test_ldx_imm(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xa2; /* ldx */
 	mem[0x101] = 0x4e; /* #$4e */
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.xr == 0x4e);
 	TEST_CHECK(cpu.sr == 0);
@@ -1825,7 +1920,7 @@ void test_ldx_imm(void)
 	mem[0x101] = 0x00; /* #$0 */
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.xr == 0x0);
 	TEST_CHECK(cpu.sr == zero_flag);
@@ -1833,7 +1928,7 @@ void test_ldx_imm(void)
 	mem[0x101] = 0xff; /* #$ff */
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.xr == 0xff);
 	TEST_CHECK(cpu.sr == negative_flag);
@@ -1842,6 +1937,7 @@ void test_ldx_imm(void)
 void test_ldy_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.yr = 0x5a;
 	mem[0x10] = 0x80;
@@ -1849,7 +1945,7 @@ void test_ldy_zp(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.yr == 0x80);
@@ -1858,6 +1954,7 @@ void test_ldy_zp(void)
 void test_lda_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x18;
 	mem[0x10] = 0x80;
@@ -1865,7 +1962,7 @@ void test_lda_zp(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x80);
@@ -1874,13 +1971,14 @@ void test_lda_zp(void)
 void test_ldx_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xa6; /* ldx $10 */
 	mem[0x101] = 0x10;
 	mem[0x10] = 0x81;
 	cpu.pc = 0x100;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.xr == 0x81);
@@ -1889,13 +1987,14 @@ void test_ldx_zp(void)
 void test_tay(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xa8; /* tay */
 	cpu.pc = 0x100;
 	cpu.sr = 0;
 	cpu.yr = 0;
 	cpu.ac = 0x80;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.yr == 0x80);
@@ -1904,12 +2003,13 @@ void test_tay(void)
 void test_lda_imm(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xa9; /* lda #$80 */
 	mem[0x101] = 0x80;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.ac == 0x80);
 	TEST_CHECK(cpu.sr == negative_flag);
@@ -1918,12 +2018,13 @@ void test_lda_imm(void)
 void test_tax(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xaa; /* tax */
 	cpu.pc = 0x100;
 	cpu.ac = 0x80;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.xr == 0x80);
@@ -1932,6 +2033,7 @@ void test_tax(void)
 void test_ldy_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xac; /* ldy $4010 */
 	mem[0x101] = 0x10;
@@ -1940,7 +2042,7 @@ void test_ldy_abs(void)
 	cpu.pc = 0x100;
 	cpu.yr = 0x0;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.yr == 0xff);
@@ -1949,6 +2051,7 @@ void test_ldy_abs(void)
 void test_lda_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x18;
 	mem[0x100] = 0xad; /* lda $1409 */
@@ -1958,7 +2061,7 @@ void test_lda_abs(void)
 	cpu.pc = 0x100;
 	cpu.ac = 0x80;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == zero_flag);
 	TEST_CHECK(cpu.ac == 0x0);
@@ -1967,6 +2070,7 @@ void test_lda_abs(void)
 void test_ldx_abs(void)
 {
         CPU_CTX cpu;
+	SIM_CTX sim;
         init_cpu(&cpu);
         mem[0x100] = 0xae; /* ldx $1409 */
         mem[0x101] = 0x09;
@@ -1974,7 +2078,7 @@ void test_ldx_abs(void)
         mem[0x1409] = 0x88;
         cpu.pc = 0x100;
         cpu.sr = 0;
-        execute_instruction(&cpu);
+        execute_instruction(&sim, &cpu);
         TEST_CHECK(cpu.pc == 0x103);
         TEST_CHECK(cpu.sr == negative_flag);
         TEST_CHECK(cpu.xr == 0x88);
@@ -1983,22 +2087,24 @@ void test_ldx_abs(void)
 void test_bcs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xb0; /* bcs */
 	mem[0x101] = 0x4e; /* offset */
 	cpu.pc = 0x100;
 	cpu.sr = carry_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x150);
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 }
 
 void test_lda_zp_y_ind(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.yr = 0x10;
 	mem[0x100] = 0xb1; /* lda ($20), y */
@@ -2009,7 +2115,7 @@ void test_lda_zp_y_ind(void)
 	mem[0x20] = 0x00;
 	mem[0x21] = 0x80;
 	mem[0x8010] = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == zero_flag);
 	TEST_CHECK(cpu.ac == 0x0);
@@ -2018,6 +2124,7 @@ void test_lda_zp_y_ind(void)
 void test_ldy_zp_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.yr = 0x5a;
 	cpu.xr = 0x20;
@@ -2026,7 +2133,7 @@ void test_ldy_zp_x(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == zero_flag);
 	TEST_CHECK(cpu.yr == 0x0);
@@ -2035,6 +2142,7 @@ void test_ldy_zp_x(void)
 void test_lda_zp_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x88;
 	cpu.xr = 0x10;
@@ -2043,7 +2151,7 @@ void test_lda_zp_x(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(cpu.ac == 0x64);
@@ -2052,6 +2160,7 @@ void test_lda_zp_x(void)
 void test_ldx_zp_y(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.yr = 0x10;
 	mem[0x20] = 0x64;
@@ -2059,7 +2168,7 @@ void test_ldx_zp_y(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(cpu.xr == 0x64);
@@ -2068,11 +2177,12 @@ void test_ldx_zp_y(void)
 void test_clv(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xb8; /* clv */
 	cpu.pc = 0x100;
 	cpu.sr = (negative_flag | overflow_flag);
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == negative_flag);
 }
@@ -2080,6 +2190,7 @@ void test_clv(void)
 void test_lda_abs_y(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xb9; /* lda $1001,y */
 	mem[0x101] = 0x01;
@@ -2089,7 +2200,7 @@ void test_lda_abs_y(void)
 	cpu.sr = 0x0;
 	cpu.yr = 0x10;
 	cpu.ac = 0x8f;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == zero_flag);
 	TEST_CHECK(cpu.ac == 0x0);
@@ -2098,12 +2209,13 @@ void test_lda_abs_y(void)
 void test_tsx(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xba; /* tsx */
 	cpu.pc = 0x100;
 	cpu.sp = 0x80;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.xr == 0x80);
@@ -2112,6 +2224,7 @@ void test_tsx(void)
 void test_ldy_abs_x(void)
 {
         CPU_CTX cpu;
+	SIM_CTX sim;
         init_cpu(&cpu);
         mem[0x100] = 0xbc; /* lda $4010,x */
         mem[0x101] = 0x10;
@@ -2121,7 +2234,7 @@ void test_ldy_abs_x(void)
         cpu.sr = 0x0;
         cpu.xr = 0x1;
         cpu.yr = 0x8f;
-        execute_instruction(&cpu);
+        execute_instruction(&sim, &cpu);
         TEST_CHECK(cpu.pc == 0x103);
         TEST_CHECK(cpu.sr == negative_flag);
         TEST_CHECK(cpu.yr == 0x80);
@@ -2130,6 +2243,7 @@ void test_ldy_abs_x(void)
 void test_lda_abs_x(void)
 {
         CPU_CTX cpu;
+	SIM_CTX sim;
         init_cpu(&cpu);
         mem[0x100] = 0xbd; /* lda $1400,x */
         mem[0x101] = 0x00;
@@ -2139,7 +2253,7 @@ void test_lda_abs_x(void)
         cpu.sr = 0x0;
         cpu.xr = 0x9;
         cpu.ac = 0x8f;
-        execute_instruction(&cpu);
+        execute_instruction(&sim, &cpu);
         TEST_CHECK(cpu.pc == 0x103);
         TEST_CHECK(cpu.sr == zero_flag);
         TEST_CHECK(cpu.ac == 0x0);
@@ -2148,6 +2262,7 @@ void test_lda_abs_x(void)
 void test_ldx_abs_y(void)
 {
         CPU_CTX cpu;
+	SIM_CTX sim;
         init_cpu(&cpu);
         mem[0x100] = 0xbe; /* ldx $1400,y */
         mem[0x101] = 0x00;
@@ -2156,7 +2271,7 @@ void test_ldx_abs_y(void)
         cpu.pc = 0x100;
         cpu.sr = 0x0;
 	cpu.yr = 0x9;
-        execute_instruction(&cpu);
+        execute_instruction(&sim, &cpu);
         TEST_CHECK(cpu.pc == 0x103);
         TEST_CHECK(cpu.sr == negative_flag);
         TEST_CHECK(cpu.xr == 0x88);
@@ -2165,13 +2280,14 @@ void test_ldx_abs_y(void)
 void test_cpy_imm(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.yr = 0x10;
 	mem[0x100] = 0xc0; /* cpy */
 	mem[0x101] = 0x20; /* #$20 */
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.yr == 0x10);
 	TEST_CHECK(cpu.sr == negative_flag);
@@ -2179,7 +2295,7 @@ void test_cpy_imm(void)
 	mem[0x101] = 0x10; /* #$10 */
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.yr == 0x10);
 	TEST_CHECK(cpu.sr == (zero_flag | carry_flag));
@@ -2187,7 +2303,7 @@ void test_cpy_imm(void)
 	mem[0x101] = 0x01; /* #$01 */
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.yr == 0x10);
 	TEST_CHECK(cpu.sr == carry_flag);
@@ -2196,6 +2312,7 @@ void test_cpy_imm(void)
 void test_cmp_zp_x_ind(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.xr = 0x10;
 	mem[0x100] = 0xc1; /* cmp ($10, x) */
@@ -2206,7 +2323,7 @@ void test_cmp_zp_x_ind(void)
 	mem[0x20] = 0x00;
 	mem[0x21] = 0x80;
 	mem[0x8000] = 0xff;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(cpu.ac == 0x55);
@@ -2215,6 +2332,7 @@ void test_cmp_zp_x_ind(void)
 void test_cpy_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.yr = 0x5a;
 	mem[0x10] = 0x0;
@@ -2222,7 +2340,7 @@ void test_cpy_zp(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == carry_flag);
 	TEST_CHECK(cpu.yr == 0x5a);
@@ -2231,6 +2349,7 @@ void test_cpy_zp(void)
 void test_cmp_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x18;
 	mem[0x10] = 0x80;
@@ -2238,7 +2357,7 @@ void test_cmp_zp(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.ac == 0x18);
@@ -2247,13 +2366,14 @@ void test_cmp_zp(void)
 void test_dec_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xc6; /* dec $10 */
 	mem[0x101] = 0x10;
 	mem[0x10] = 0x0;
 	cpu.pc = 0x100;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(mem[0x10] == 0xff);
@@ -2262,12 +2382,13 @@ void test_dec_zp(void)
 void test_iny(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xc8; /* iny */
 	cpu.pc = 0x100;
 	cpu.sr = 0;
 	cpu.yr = 0x7f;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(cpu.yr == 0x80);
@@ -2276,13 +2397,14 @@ void test_iny(void)
 void test_cmp_imm(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x20;
 	mem[0x100] = 0xc9; /* cmp #$20 */
 	mem[0x101] = 0x20;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.ac == 0x20);
 	TEST_CHECK(cpu.sr == (carry_flag | zero_flag));
@@ -2291,12 +2413,13 @@ void test_cmp_imm(void)
 void test_dex(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xca; /* dex */
 	cpu.pc = 0x100;
 	cpu.sr = 0;
 	cpu.xr = 0x1;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == zero_flag);
 	TEST_CHECK(cpu.xr == 0x0);
@@ -2305,6 +2428,7 @@ void test_dex(void)
 void test_cpy_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.yr = 0x10;
 	mem[0x100] = 0xcc; /* cpy $4020 */
@@ -2313,7 +2437,7 @@ void test_cpy_abs(void)
 	mem[0x4020] = 0x1;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.yr == 0x10);
 	TEST_CHECK(cpu.sr == carry_flag);
@@ -2322,6 +2446,7 @@ void test_cpy_abs(void)
 void test_cmp_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xcd; /* cmp $1409 */
 	mem[0x101] = 0x09;
@@ -2330,7 +2455,7 @@ void test_cmp_abs(void)
 	cpu.pc = 0x100;
 	cpu.sr = 0;
 	cpu.ac = 0x15;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == carry_flag);
 	TEST_CHECK(cpu.ac == 0x15);
@@ -2339,6 +2464,7 @@ void test_cmp_abs(void)
 void test_dec_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xce; /* dec $1409 */
 	mem[0x101] = 0x09;
@@ -2346,7 +2472,7 @@ void test_dec_abs(void)
 	mem[0x1409] = 0xce;
 	cpu.pc = 0x100;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(mem[0x1409] == 0xcd);
@@ -2355,22 +2481,24 @@ void test_dec_abs(void)
 void test_bne(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xd0; /* bne */
 	mem[0x101] = 0x80; /* offset */
 	cpu.pc = 0x100;
 	cpu.sr = zero_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x82);
 }
 
 void test_cmp_zp_y_ind(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.yr = 0x10;
 	mem[0x100] = 0xd1; /* cmp ($20), y */
@@ -2381,7 +2509,7 @@ void test_cmp_zp_y_ind(void)
 	mem[0x20] = 0x00;
 	mem[0x21] = 0x80;
 	mem[0x8010] = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == carry_flag);
 	TEST_CHECK(cpu.ac == 0x55);
@@ -2390,6 +2518,7 @@ void test_cmp_zp_y_ind(void)
 void test_cmp_zp_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x88;
 	cpu.xr = 0x10;
@@ -2398,7 +2527,7 @@ void test_cmp_zp_x(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == carry_flag);
 	TEST_CHECK(cpu.ac == 0x88);
@@ -2407,6 +2536,7 @@ void test_cmp_zp_x(void)
 void test_dec_zp_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.xr = 0x10;
 	mem[0x20] = 0x1;
@@ -2414,7 +2544,7 @@ void test_dec_zp_x(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == zero_flag);
 	TEST_CHECK(mem[0x20] == 0x0);
@@ -2423,11 +2553,12 @@ void test_dec_zp_x(void)
 void test_cld(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xd8; /* clv */
 	cpu.pc = 0x100;
 	cpu.sr = (negative_flag | decimal_flag);
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == negative_flag);
 }
@@ -2435,6 +2566,7 @@ void test_cld(void)
 void test_cmp_abs_y(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xd9; /* cmp $2000,y */
 	mem[0x101] = 0x00;
@@ -2444,7 +2576,7 @@ void test_cmp_abs_y(void)
 	cpu.yr = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.ac == 0x20);
 	TEST_CHECK(cpu.sr == (carry_flag | zero_flag));
@@ -2453,6 +2585,7 @@ void test_cmp_abs_y(void)
 void test_cmp_abs_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xdd; /* cmp $1400,x */
 	mem[0x101] = 0x00;
@@ -2462,7 +2595,7 @@ void test_cmp_abs_x(void)
 	cpu.sr = 0;
 	cpu.ac = 0x15;
 	cpu.xr = 0x9;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == carry_flag);
 	TEST_CHECK(cpu.ac == 0x15);
@@ -2471,6 +2604,7 @@ void test_cmp_abs_x(void)
 void test_dec_abs_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xde; /* dec $1400,x */
 	mem[0x101] = 0x00;
@@ -2479,7 +2613,7 @@ void test_dec_abs_x(void)
 	cpu.pc = 0x100;
 	cpu.sr = 0;
 	cpu.xr = 0x9;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == negative_flag);
 	TEST_CHECK(mem[0x1409] == 0xdd);
@@ -2488,13 +2622,14 @@ void test_dec_abs_x(void)
 void test_cpx_imm(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.xr = 0x10;
 	mem[0x100] = 0xe0; /* cpx */
 	mem[0x101] = 0x91; /* #$91 */
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.xr == 0x10);
 	TEST_CHECK(cpu.sr == 0x0);
@@ -2502,7 +2637,7 @@ void test_cpx_imm(void)
 	mem[0x101] = 0x10; /* #$10 */
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.xr == 0x10);
 	TEST_CHECK(cpu.sr == (zero_flag | carry_flag));
@@ -2511,7 +2646,7 @@ void test_cpx_imm(void)
 	mem[0x101] = 0x01; /* #$01 */
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.xr == 0x90);
 	TEST_CHECK(cpu.sr == (carry_flag | negative_flag));
@@ -2520,6 +2655,7 @@ void test_cpx_imm(void)
 void test_sbc_zp_x_ind(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.xr = 0x10;
 	mem[0x100] = 0xe1; /* sbc ($10, x) */
@@ -2530,7 +2666,7 @@ void test_sbc_zp_x_ind(void)
 	mem[0x20] = 0x00;
 	mem[0x21] = 0x80;
 	mem[0x8000] = 0xff;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == 0);
 	TEST_CHECK(cpu.ac == 0x56);
@@ -2539,6 +2675,7 @@ void test_sbc_zp_x_ind(void)
 void test_cpx_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.xr = 0x20;
 	mem[0x30] = 0x20;
@@ -2546,7 +2683,7 @@ void test_cpx_zp(void)
 	mem[0x101] = 0x30;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == (carry_flag | zero_flag));
 	TEST_CHECK(cpu.xr == 0x20);
@@ -2555,6 +2692,7 @@ void test_cpx_zp(void)
 void test_sbc_zp(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x18;
 	mem[0x10] = 0x80;
@@ -2562,7 +2700,7 @@ void test_sbc_zp(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = carry_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == (negative_flag | overflow_flag));
 	TEST_CHECK(cpu.ac == 0x98);
@@ -2571,13 +2709,14 @@ void test_sbc_zp(void)
 void test_inc_zp(void)
 {
         CPU_CTX cpu;
+	SIM_CTX sim;
         init_cpu(&cpu);
         mem[0x100] = 0xe6; /* inc $10 */
         mem[0x101] = 0x10;
         mem[0x10] = 0x7f;
         cpu.pc = 0x100;
         cpu.sr = 0;
-        execute_instruction(&cpu);
+        execute_instruction(&sim, &cpu);
         TEST_CHECK(cpu.pc == 0x102);
         TEST_CHECK(cpu.sr == negative_flag);
         TEST_CHECK(mem[0x10] == 0x80);
@@ -2586,12 +2725,13 @@ void test_inc_zp(void)
 void test_inx(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xe8; /* inx */
 	cpu.pc = 0x100;
 	cpu.sr = 0;
 	cpu.xr = 0xff;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == zero_flag);
 	TEST_CHECK(cpu.yr == 0x0);
@@ -2600,13 +2740,14 @@ void test_inx(void)
 void test_sbc_imm(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xe9; /* sbc #$8 */
 	mem[0x101] = 0x8;
 	cpu.pc = 0x100;
 	cpu.sr = carry_flag;
 	cpu.ac = 0x80;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == (carry_flag | overflow_flag));
 	TEST_CHECK(cpu.ac == 0x78);
@@ -2615,11 +2756,12 @@ void test_sbc_imm(void)
 void test_nop(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xea; /* nop */
 	cpu.pc = 0x100;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == 0);
 }
@@ -2627,6 +2769,7 @@ void test_nop(void)
 void test_cpx_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.xr = 0x10;
 	mem[0x100] = 0xec; /* cpx $4020 */
@@ -2635,7 +2778,7 @@ void test_cpx_abs(void)
 	mem[0x4020] = 0x1;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.xr == 0x10);
 	TEST_CHECK(cpu.sr == carry_flag);
@@ -2644,6 +2787,7 @@ void test_cpx_abs(void)
 void test_sbc_abs(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xed; /* sbc $1409 */
 	mem[0x101] = 0x09;
@@ -2652,7 +2796,7 @@ void test_sbc_abs(void)
 	cpu.pc = 0x100;
 	cpu.ac = 0x18;
 	cpu.sr = carry_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == carry_flag);
 	TEST_CHECK(cpu.ac == 0x4);
@@ -2661,6 +2805,7 @@ void test_sbc_abs(void)
 void test_inc_abs(void)
 {
         CPU_CTX cpu;
+	SIM_CTX sim;
         init_cpu(&cpu);
         mem[0x100] = 0xee; /* inc $1409 */
         mem[0x101] = 0x09;
@@ -2668,7 +2813,7 @@ void test_inc_abs(void)
         mem[0x1409] = 0xee;
         cpu.pc = 0x100;
         cpu.sr = 0;
-        execute_instruction(&cpu);
+        execute_instruction(&sim, &cpu);
         TEST_CHECK(cpu.pc == 0x103);
         TEST_CHECK(cpu.sr == negative_flag);
         TEST_CHECK(mem[0x1409] == 0xef);
@@ -2677,22 +2822,24 @@ void test_inc_abs(void)
 void test_beq(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xf0; /* beq */
 	mem[0x101] = 0x80; /* offset */
 	cpu.pc = 0x100;
 	cpu.sr = zero_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x82);
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 }
 
 void test_sbc_zp_y_ind(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.yr = 0x10;
 	mem[0x100] = 0xf1; /* sbc ($20), y */
@@ -2703,7 +2850,7 @@ void test_sbc_zp_y_ind(void)
 	mem[0x20] = 0x00;
 	mem[0x21] = 0x80;
 	mem[0x8010] = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == carry_flag);
 	TEST_CHECK(cpu.ac == 0x54);
@@ -2712,6 +2859,7 @@ void test_sbc_zp_y_ind(void)
 void test_sbc_zp_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.ac = 0x88;
 	cpu.xr = 0x10;
@@ -2720,7 +2868,7 @@ void test_sbc_zp_x(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = carry_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == (carry_flag | overflow_flag));
 	TEST_CHECK(cpu.ac == 0x24);
@@ -2729,6 +2877,7 @@ void test_sbc_zp_x(void)
 void test_inc_zp_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	cpu.xr = 0x10;
 	mem[0x20] = 0xff;
@@ -2736,7 +2885,7 @@ void test_inc_zp_x(void)
 	mem[0x101] = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x102);
 	TEST_CHECK(cpu.sr == zero_flag);
 	TEST_CHECK(mem[0x20] == 0x0);
@@ -2745,11 +2894,12 @@ void test_inc_zp_x(void)
 void test_sed(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xf8; /* sed */
 	cpu.pc = 0x100;
 	cpu.sr = negative_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x101);
 	TEST_CHECK(cpu.sr == (negative_flag | decimal_flag));
 }
@@ -2757,6 +2907,7 @@ void test_sed(void)
 void test_sbc_abs_y(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xf9; /* sbc $2000,y */
 	mem[0x101] = 0x00;
@@ -2766,7 +2917,7 @@ void test_sbc_abs_y(void)
 	cpu.yr = 0x10;
 	cpu.pc = 0x100;
 	cpu.sr = 0x0;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.ac == 0xff);
 	TEST_CHECK(cpu.sr == (negative_flag));
@@ -2775,6 +2926,7 @@ void test_sbc_abs_y(void)
 void test_sbc_abs_x(void)
 {
 	CPU_CTX cpu;
+	SIM_CTX sim;
 	init_cpu(&cpu);
 	mem[0x100] = 0xfd; /* sbc $1400,x */
 	mem[0x101] = 0x00;
@@ -2784,7 +2936,7 @@ void test_sbc_abs_x(void)
 	cpu.ac = 0x18;
 	cpu.xr = 0x9;
 	cpu.sr = carry_flag;
-	execute_instruction(&cpu);
+	execute_instruction(&sim, &cpu);
 	TEST_CHECK(cpu.pc == 0x103);
 	TEST_CHECK(cpu.sr == carry_flag);
 	TEST_CHECK(cpu.ac == 0x4);
@@ -2793,6 +2945,7 @@ void test_sbc_abs_x(void)
 void test_inc_abs_x(void)
 {
         CPU_CTX cpu;
+	SIM_CTX sim;
         init_cpu(&cpu);
         mem[0x100] = 0xfe; /* inc $1400,x */
         mem[0x101] = 0x00;
@@ -2801,7 +2954,7 @@ void test_inc_abs_x(void)
         cpu.pc = 0x100;
         cpu.sr = 0x0;
 	cpu.xr = 0x9;
-        execute_instruction(&cpu);
+        execute_instruction(&sim, &cpu);
         TEST_CHECK(cpu.pc == 0x103);
         TEST_CHECK(cpu.sr == negative_flag);
         TEST_CHECK(mem[0x1409] == 0xff);
