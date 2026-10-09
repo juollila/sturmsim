@@ -31,8 +31,6 @@
 
 u8 mem[MEM_SIZE];
 
-
-
 void init_cpu(CPU_CTX *cpu)
 {
 	cpu->ac = 0;
@@ -292,6 +290,7 @@ static void brk_inst(CPU_CTX *cpu) {
 	push_byte(cpu, cpu->yr);
 
 	address = mem[0x316] + (0x100 * mem[0x317]);
+		printf("break: %04x\n\n", cpu->pc - 1);
 	/* if default CBINV vector then halt execution else jump via CBINV */
 	if (address == 0xfe66) {
 		printf("break: %04x\n\n", cpu->pc - 1);
@@ -325,9 +324,9 @@ void execute_instruction(SIM_CTX *sim, CPU_CTX *cpu)
 //			cpu->ac = 'R';
 //			instruction = 0x60; /* get character from keyboard buffer */
 //			break;
-//		case 0xff90:
-//			instruction = kernal_setmsg(cpu);
-//			break;
+		case 0xff90:
+			instruction = kernal_setmsg(cpu);
+			break;
 		case 0xffb7:
 			instruction = kernal_readst(cpu);
 			break;
@@ -344,14 +343,14 @@ void execute_instruction(SIM_CTX *sim, CPU_CTX *cpu)
 			instruction = kernal_clrchn(cpu);
 			break;
 		case 0xffcf:
-			instruction = kernal_chrin(cpu);
+			instruction = kernal_chrin(cpu, sim->lower_case);
 			break;
 		case 0xffd2:
 			instruction = kernal_chrout(cpu, sim->lower_case);
 			break;
-//		case 0xfff0:
-//			instruction = 0x60; /* plot */
-//			break;
+		case 0xfff0:
+			instruction = kernal_plot(cpu);
+			break;
 		default:
 			instruction = fetch_byte(cpu);
 			break;

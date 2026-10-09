@@ -32,6 +32,9 @@
 #define RTS 0x60
 #define MAX_FILES 10
 
+#define KEYBOARD_BUFFER 0x277
+#define KBLEN 0xc6
+
 static u8 input_device = 0;
 static u8 output_device = 3;
 static u8 io_status = 0;
@@ -141,20 +144,31 @@ u8 kernal_clrchn(CPU_CTX *cpu)
 	return RTS;
 }
 
-u8 kernal_chrin(CPU_CTX *cpu)
+u8 kernal_chrin(CPU_CTX *cpu, bool lower)
 {
-	struct termios term_old, term_new;
-	tcgetattr(STDIN_FILENO, &term_old);
-	term_new = term_old;
-	term_new.c_lflag &= ~(ICANON | ECHO); /* disable buffering and echo*/
-	tcsetattr(STDIN_FILENO, TCSANOW, &term_new);
-	char c = getchar();
+	u8 c, i;
+	u8 len = mem[KBLEN];
+	if (len == 0) {
+		struct termios term_old, term_new;
+		tcgetattr(STDIN_FILENO, &term_old);
+		term_new = term_old;
+		term_new.c_lflag &= ~(ICANON | ECHO); /* disable buffering and echo*/
+		tcsetattr(STDIN_FILENO, TCSANOW, &term_new);
+		c = getchar();
+		tcsetattr(STDIN_FILENO, TCSANOW, &term_old);
+	} else {
+		c = mem[KEYBOARD_BUFFER];
+		for (i = 0; i < len; i++)
+			mem[KEYBOARD_BUFFER + i] = mem[KEYBOARD_BUFFER + i + 1];
+		mem[KBLEN] = len - 1;
+	}
+	if (lower == false && c >= 0x61 && c <= 0x7a)
+		c -= 0x20;
 	if (c >= ' ')
 		putchar(c);
 	if (c == '\n')
 		c = '\r';
-	cpu->ac = (u8) c;
-	tcsetattr(STDIN_FILENO, TCSANOW, &term_old);
+	cpu->ac = c;
 	cpu->sr &= (~carry_flag);
 	return RTS;
 }
@@ -164,6 +178,21 @@ u8 kernal_chrout(CPU_CTX *cpu, bool lower)
 {
 	u8 i = cpu->ac;
 	if (i == 0xd) i = '\n';
+	/* reverse on */
+	if (i == 0x12) {
+		printf("\033[7m");
+		cpu->sr &= (~carry_flag);
+		return RTS;
+	}
+	/* reverse off */
+	if (i == 0x92) {
+		printf("\033[27m");
+		cpu->sr &= (~carry_flag);
+		return RTS;
+	}
+	/* shift + space */
+	if (i == 0xa0)
+		i = 0x20;
 	if (lower == false && i >= 0x60) i = '.';
 	if (lower == true) {
 		if (i>=0x41 && i<=0x5a)
@@ -179,3 +208,23 @@ u8 kernal_chrout(CPU_CTX *cpu, bool lower)
 	return RTS;
 }
 
+u8 kernal_plot(CPU_CTX *cpu)
+{
+	int x, y;
+	if ((cpu->sr & carry_flag) == carry_flag) {
+		struct termios term_old, term_new;
+		tcgetattr(STDIN_FILENO, &term_old);
+		term_new = term_old;
+		term_new.c_lflag &= ~(ICANON | ECHO); /* disable buffering and echo*/
+		tcsetattr(STDIN_FILENO, TCSANOW, &term_new);
+		printf("\033[6n");
+		fflush(stdout);
+		scanf("\033[%d;%dR", &x, &y);
+		cpu->xr = (u8) x;
+		cpu->yr = (u8) y;
+		tcsetattr(STDIN_FILENO, TCSANOW, &term_old);
+	} else {
+		printf("\033[%d;%dH", cpu->xr, cpu->yr);
+	}
+	return RTS;
+}

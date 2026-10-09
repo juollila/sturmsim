@@ -36,7 +36,6 @@ typedef unsigned short u16;
 typedef signed short i16;
 typedef unsigned int u32;
 
-
 typedef struct {
 	u16 pc;
 	u8 sr;
