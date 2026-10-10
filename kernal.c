@@ -43,6 +43,22 @@ static u8 lfs_file, lfs_device, lfs_sa;
 
 FCB_CTX fcb[MAX_FILES];
 
+struct termios term_old, term_new;
+
+
+void disable_echo()
+{
+	tcgetattr(STDIN_FILENO, &term_old);
+	term_new = term_old;
+	term_new.c_lflag &= ~(ICANON | ECHO); /* disable buffering and echo*/
+	tcsetattr(STDIN_FILENO, TCSANOW, &term_new);
+}
+
+void enable_echo()
+{
+	tcsetattr(STDIN_FILENO, TCSANOW, &term_old);
+}
+
 void init_kernal(void)
 {
 	for (int i = 0; i < MAX_FILES ; i++) fcb[i].open = false;
@@ -149,13 +165,9 @@ u8 kernal_chrin(CPU_CTX *cpu, bool lower)
 	u8 c, i;
 	u8 len = mem[KBLEN];
 	if (len == 0) {
-		struct termios term_old, term_new;
-		tcgetattr(STDIN_FILENO, &term_old);
-		term_new = term_old;
-		term_new.c_lflag &= ~(ICANON | ECHO); /* disable buffering and echo*/
-		tcsetattr(STDIN_FILENO, TCSANOW, &term_new);
+		disable_echo();
 		c = getchar();
-		tcsetattr(STDIN_FILENO, TCSANOW, &term_old);
+		enable_echo();
 	} else {
 		c = mem[KEYBOARD_BUFFER];
 		for (i = 0; i < len; i++)
@@ -212,17 +224,13 @@ u8 kernal_plot(CPU_CTX *cpu)
 {
 	int x, y;
 	if ((cpu->sr & carry_flag) == carry_flag) {
-		struct termios term_old, term_new;
-		tcgetattr(STDIN_FILENO, &term_old);
-		term_new = term_old;
-		term_new.c_lflag &= ~(ICANON | ECHO); /* disable buffering and echo*/
-		tcsetattr(STDIN_FILENO, TCSANOW, &term_new);
+		disable_echo();
 		printf("\033[6n");
 		fflush(stdout);
 		scanf("\033[%d;%dR", &x, &y);
 		cpu->xr = (u8) x;
 		cpu->yr = (u8) y;
-		tcsetattr(STDIN_FILENO, TCSANOW, &term_old);
+		enable_echo();
 	} else {
 		printf("\033[%d;%dH", cpu->xr, cpu->yr);
 	}
