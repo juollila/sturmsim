@@ -44,12 +44,9 @@ void init_cpu(CPU_CTX *cpu)
 
 void init_memory(void)
 {
-	for(int i = 0; i < MEM_SIZE;) {
+	for(int i = 0; i < MEM_SIZE;)
 		mem[i++] = 0x0;
-		// mem[i++] = 0x0f;
-		// mem[i++] = 0xf0;
-		// mem[i++] = 0xff;
-	}
+
 	/* Install default BRK vector (CBINV), C64 specific */
 	mem[0x316] = 0x66;
 	mem[0x317] = 0xfe;
@@ -67,12 +64,12 @@ static u8 peek_byte(CPU_CTX *cpu)
 
 static u16 fetch_word(CPU_CTX *cpu)
 {
-	return (mem[cpu->pc++] + 256 * mem[cpu->pc++]);
+	return (mem[cpu->pc++] + 0x100 * mem[cpu->pc++]);
 }
 
 static u16 peek_word(CPU_CTX *cpu)
 {
-	return (mem[cpu->pc] + 256 * mem[cpu->pc+1]);
+	return (mem[cpu->pc] + 0x100 * mem[cpu->pc+1]);
 }
 
 static void push_byte(CPU_CTX *cpu, u8 i)
@@ -102,14 +99,20 @@ static u16 pull_word(CPU_CTX *cpu)
 	value = mem[0x100 + cpu->sp];
 	cpu->sp++;
 	value = value + (0x100 * mem[0x100 + cpu->sp]);
-	// printf("pull_word: %04x\n", value);
 	return value;	
 }
 
 void set_nz_flags(CPU_CTX *cpu, u8 i)
 {
-	if (i == 0) cpu->sr |= zero_flag; else cpu->sr &= (~zero_flag);
-	if (i >= 0x80) cpu->sr |= negative_flag; else cpu->sr &= (~negative_flag);
+	if (i == 0)
+		cpu->sr |= zero_flag;
+	else
+		cpu->sr &= (~zero_flag);
+
+	if (i >= 0x80)
+		cpu->sr |= negative_flag;
+	else
+		cpu->sr &= (~negative_flag);
 }
 
 
@@ -120,12 +123,18 @@ void set_cmp_flags(CPU_CTX *cpu, u8 i, u8 j)
 		cpu->sr &= (~zero_flag);
 		cpu->sr &= (~carry_flag);
 		result = (i8)i - (i8)j;
-		if ((result & 0x80) == 0x80) cpu->sr |= negative_flag; else cpu->sr &= (~negative_flag); 
+		if ((result & 0x80) == 0x80)
+			cpu->sr |= negative_flag;
+		else
+			cpu->sr &= (~negative_flag); 
 	} else if(i > j) {
 		cpu->sr &= (~zero_flag);
 		cpu->sr |= carry_flag;
 		result = (i8)i - (i8)j;
-		if ((result & 0x80) == 0x80) cpu->sr |= negative_flag; else cpu->sr &= (~negative_flag); 
+		if ((result & 0x80) == 0x80)
+			cpu->sr |= negative_flag;
+		else
+			cpu->sr &= (~negative_flag); 
 	} else {
 		cpu->sr |= zero_flag;
 		cpu->sr |= carry_flag;
@@ -142,29 +151,28 @@ u8 adc(CPU_CTX *cpu, u8 i, u8 j)
 	u8 r = (u8)sum;
 
 	/* binary mode flags */
-	if (sum > 0xff) {
+	if (sum > 0xff)
 		cpu->sr |= carry_flag;
-	} else {
+	else
 		cpu->sr &= (~carry_flag);
-	}
-	if (((i ^ r) & (j ^ r) & 0x80) != 0) {
+	if (((i ^ r) & (j ^ r) & 0x80) != 0)
 		cpu->sr |= overflow_flag;
-	} else {
+	else
 		cpu->sr &= (~overflow_flag);
-	}
 	set_nz_flags(cpu, r);
 
 	/* decimal mode */
 	if (cpu->sr & decimal_flag) {
-		if ((i & 0xf) + (j & 0xf) + carry > 9) sum = sum + 0x6;
-		if (sum > 0x99) sum = sum + 0x60;
+		if ((i & 0xf) + (j & 0xf) + carry > 9)
+			sum = sum + 0x6;
+		if (sum > 0x99)
+			sum = sum + 0x60;
 		r = (u8) sum;
 		/* decimal mode affects only to carry flag */
-		if (sum > 0xff) {
+		if (sum > 0xff)
 			cpu->sr |= carry_flag;
-		} else {
+		else
 			cpu->sr &= (~carry_flag);
-		}
 	}
 
 	return r;
@@ -178,36 +186,35 @@ u8 sbc(CPU_CTX *cpu, u8 i, u8 j)
 	u8 r = (u8)diff;
 
 	/* binary mode flags */
-	if ((((i ^ j) & (i ^ r)) & 0x80) != 0) {
+	if ((((i ^ j) & (i ^ r)) & 0x80) != 0)
 		cpu->sr |= overflow_flag;
-	} else {
+	else
 		cpu->sr &= (~overflow_flag);
-	}
 	set_nz_flags(cpu, r);
 
 	if (cpu->sr & decimal_flag) {
-		if (((i & 0xf) - borrow) < (j & 0xf)) diff = diff - 0x6;
-		if (diff < 0) diff = diff - 0x60;
+		if (((i & 0xf) - borrow) < (j & 0xf))
+			diff = diff - 0x6;
+		if (diff < 0)
+			diff = diff - 0x60;
 		r = (u8) diff;
 	}
 
 	/* set carry flag if needed */
-	if (diff >= 0x0) {
+	if (diff >= 0x0)
 		cpu->sr |= carry_flag; /* no borrow */
-	} else {
+	else
 		cpu->sr &= (~carry_flag); /* borrow */
-	}
 
 	return r;
 }
 
 static u8 asl(CPU_CTX *cpu, u8 i)
 {
-	if ((i & 0x80) == 0x80) {
+	if ((i & 0x80) == 0x80)
 		cpu->sr |= carry_flag;
-	} else {
+	else
 		cpu->sr &= (~carry_flag);
-	}
 	u8 r = i << 1;
 	set_nz_flags(cpu, r);
 	return r;
@@ -215,48 +222,52 @@ static u8 asl(CPU_CTX *cpu, u8 i)
 
 static u8 rol(CPU_CTX *cpu, u8 i)
 {	u8 r = i << 1;
-	if ((cpu->sr & carry_flag) == carry_flag) {
+	if ((cpu->sr & carry_flag) == carry_flag)
 		r |= 0x1;
-	}
-	if ((i & 0x80) == 0x80) {
+	if ((i & 0x80) == 0x80)
 		cpu->sr |= carry_flag;
-	} else {
+	else
 		cpu->sr &= (~carry_flag);
-	}
 	set_nz_flags(cpu, r);
 	return r;
 }
 
 static u8 lsr(CPU_CTX *cpu, u8 i)
 {	u8 r = i >> 1;
-	if ((i & 0x1) == 0x1) {
+	if ((i & 0x1) == 0x1)
 		cpu->sr |= carry_flag;
-	} else {
+	else
 		cpu->sr &= (~carry_flag);
-	}
 	set_nz_flags(cpu, r);
 	return r;
 }
 
 static u8 ror(CPU_CTX *cpu, u8 i)
 {	u8 r = i >> 1;
-	if ((cpu->sr & carry_flag) == carry_flag) {
+	if ((cpu->sr & carry_flag) == carry_flag)
 		r |= 0x80;
-	}
-	if ((i & 0x1) == 0x1) {
+	if ((i & 0x1) == 0x1)
 		cpu->sr |= carry_flag;
-	} else {
+	else
 		cpu->sr &= (~carry_flag);
-	}
 	set_nz_flags(cpu, r);
 	return r;
 }
 
 static void bit(CPU_CTX *cpu, u8 i)
 {
-	if ((cpu->ac & i) == 0) cpu->sr |= zero_flag; else cpu->sr &= (~zero_flag);
-	if (i & 0x80) cpu->sr |= negative_flag; else cpu->sr &= (~negative_flag);
-	if (i & 0x40) cpu->sr |= overflow_flag; else cpu->sr &= (~overflow_flag);
+	if ((cpu->ac & i) == 0)
+		cpu->sr |= zero_flag;
+	else
+		cpu->sr &= (~zero_flag);
+	if (i & 0x80)
+		cpu->sr |= negative_flag;
+	else
+		cpu->sr &= (~negative_flag);
+	if (i & 0x40)
+		cpu->sr |= overflow_flag;
+	else
+		cpu->sr &= (~overflow_flag);
 }
 
 /**
@@ -311,52 +322,40 @@ void execute_instruction(SIM_CTX *sim, CPU_CTX *cpu)
 	u8 instruction, zp;
 	i8 offset;
 	u16 address;
+
 	switch (cpu->pc) {
-//		case 0xea24:
-//	 		instruction = 0x60; /* synchronize colour pointer */
-//			break;
-//		case 0xe544:
-//			instruction = 0x60; /* clear screen */
-//			break;
-//		case 0xe5b4:
-//			cpu->sr &= (~carry_flag);
-//			cpu->sr &= (~interrupt_flag);
-//			cpu->ac = 'R';
-//			instruction = 0x60; /* get character from keyboard buffer */
-//			break;
-		case 0xff90:
-			instruction = kernal_setmsg(cpu);
-			break;
-		case 0xffb7:
-			instruction = kernal_readst(cpu);
-			break;
-		case 0xffba:
-			instruction = kernal_setlfs(cpu);
-			break;
-		case 0xffc0:
-			instruction = kernal_open(cpu);
-			break;
-		case 0xffc9:
-			instruction = kernal_chkout(cpu);
-			break;
-		case 0xffcc:
-			instruction = kernal_clrchn(cpu);
-			break;
-		case 0xffcf:
-			instruction = kernal_chrin(cpu, sim->lower_case);
-			break;
-		case 0xffd2:
-			instruction = kernal_chrout(cpu, sim->lower_case);
-			break;
-		case 0xfff0:
-			instruction = kernal_plot(cpu);
-			break;
-		default:
-			instruction = fetch_byte(cpu);
-			break;
+	case 0xff90:
+		instruction = kernal_setmsg(cpu);
+		break;
+	case 0xffb7:
+		instruction = kernal_readst(cpu);
+		break;
+	case 0xffba:
+		instruction = kernal_setlfs(cpu);
+		break;
+	case 0xffc0:
+		instruction = kernal_open(cpu);
+		break;
+	case 0xffc9:
+		instruction = kernal_chkout(cpu);
+		break;
+	case 0xffcc:
+		instruction = kernal_clrchn(cpu);
+		break;
+	case 0xffcf:
+		instruction = kernal_chrin(cpu, sim->lower_case);
+		break;
+	case 0xffd2:
+		instruction = kernal_chrout(cpu, sim->lower_case);
+		break;
+	case 0xfff0:
+		instruction = kernal_plot(cpu);
+		break;
+	default:
+		instruction = fetch_byte(cpu);
+		break;
 	}
 
-	// printf("pc: %04x instruction: %02x\n", cpu->pc-1, instruction);
 	switch (instruction) {
 	case 0x0: /* BRK */
 		brk_inst(cpu);
@@ -604,7 +603,7 @@ void execute_instruction(SIM_CTX *sim, CPU_CTX *cpu)
 		break;
 	case 0x6c: /* JMP (ind) */
 		address = fetch_word(cpu);
-		/* jmp indirect has a bug */
+		/* jmp indirect has a bug in real 6502 */
 		i16 bug = ((address & 0xff) == 0xff) ? 0x100 : 0;
 		cpu->pc = mem[address] + (0x100 * mem[address + 1 - bug]);
 		break;
@@ -707,7 +706,6 @@ void execute_instruction(SIM_CTX *sim, CPU_CTX *cpu)
 		mem[fetch_word(cpu) + cpu->xr] = cpu->ac;
 		break;
 	case 0xa0: /* LDY # */
-		// printf("ldy\n");
 		cpu->yr = fetch_byte(cpu);
 		set_nz_flags(cpu, cpu->yr);
 		break;
@@ -718,7 +716,6 @@ void execute_instruction(SIM_CTX *sim, CPU_CTX *cpu)
 		set_nz_flags(cpu, cpu->ac);
 		break;
 	case 0xa2: /* LDX # */
-		// printf("ldx\n");
 		cpu->xr = fetch_byte(cpu);
 		set_nz_flags(cpu, cpu->xr);
 		break;
