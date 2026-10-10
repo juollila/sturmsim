@@ -286,6 +286,20 @@ static void bit(CPU_CTX *cpu, u8 i)
 		cpu->sr &= (~overflow_flag);
 }
 
+static void print_registers(CPU_CTX *cpu)
+{
+	printf("   PC  AC XR YR SP NV-BDIZC\n");
+	printf("; %04x %02x %02x %02x %02x %01x%01x1%01x%01x%01x%01x%01x\n",\
+			cpu->pc - 1, cpu->ac, cpu->xr, cpu->yr, cpu->sp,\
+			((cpu->sr & negative_flag) == negative_flag ? 1 : 0),\
+			((cpu->sr & overflow_flag) == overflow_flag ? 1 : 0),\
+			((cpu->sr & break_flag) == break_flag ? 1 : 0),\
+			((cpu->sr & decimal_flag) == decimal_flag ? 1 : 0),\
+			((cpu->sr & interrupt_flag) == interrupt_flag ? 1 : 0),\
+			((cpu->sr & zero_flag) == zero_flag ? 1 : 0),\
+			((cpu->sr & carry_flag) == carry_flag ? 1 : 0));
+}
+
 /**
  *
  * What happens when BRK instruction is executed:
@@ -299,6 +313,9 @@ static void bit(CPU_CTX *cpu, u8 i)
  * CBINV = $316-$317, this vector points to $fe66 in ROM
  * ROM routine calls RESTOR, IOINIT and CINT Kernal routines
  * and jumps to basic warm start.
+ *
+ * Sturmsim exits simulation if CBINV points to $fe66.
+ * Otherwise execution jumps to address specified by CBINV.
  *
  */
 
@@ -317,20 +334,14 @@ static void brk_inst(CPU_CTX *cpu) {
 	push_byte(cpu, cpu->yr);
 
 	address = mem[0x316] + (0x100 * mem[0x317]);
-		printf("break: %04x\n\n", cpu->pc - 1);
 	/* if default CBINV vector then halt execution else jump via CBINV */
 	if (address == 0xfe66) {
-		printf("break: %04x\n\n", cpu->pc - 1);
+		printf("\nbreak\n");
+		print_registers(cpu);
 		cpu->halt = true;
 	} else {
 		cpu->pc = address;
 	}
-}
-
-static void print_registers(CPU_CTX *cpu)
-{
-	printf("   PC   SR AC XR YR SP\n");
-	printf("; %04x %02x %02x %02x %02x %02x\n", cpu->pc, cpu->sr, cpu->ac, cpu->xr, cpu->yr, cpu->sp);
 }
 
 void execute_instruction(SIM_CTX *sim, CPU_CTX *cpu)
@@ -960,8 +971,8 @@ void execute_instruction(SIM_CTX *sim, CPU_CTX *cpu)
 		set_nz_flags(cpu, mem[address]);
 		break;
 	default:
-		printf("Not implemented instruction\n");
-		printf("pc: %04x instruction: %02x\n", cpu->pc-1, instruction);
+		printf("Not implemented instruction: %02x\n", instruction);
+		print_registers(cpu);
 		cpu->halt = true;
 		break;
 	}
