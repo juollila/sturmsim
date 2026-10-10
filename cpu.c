@@ -575,8 +575,10 @@ void execute_instruction(SIM_CTX *sim, CPU_CTX *cpu)
 		mem[address] = lsr(cpu, mem[address]);
 		break;
 	case 0x60: /* RTS */
-		// printf("rts\n");
-		cpu->pc = pull_word(cpu) + 1;
+		if(cpu->sp == 0xff)
+			cpu->halt = true;
+		else
+			cpu->pc = pull_word(cpu) + 1;
 		break;
 	case 0x61: /* ADC (zp,x) */
 		zp = fetch_byte(cpu);
