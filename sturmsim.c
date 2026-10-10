@@ -42,12 +42,11 @@ static void print_usage_msg()
 {
 	const char *usage_msg = "Usage: sturmsim [options] file\n\
  Long options:\n\
-  --execute-address=<value>		Specify execution start address. Default value is read from the beginning of PRG file.\n\
+  --execution-address=<value>		Specify execution start address. Default value is read from the beginning of PRG file.\n\
   --help				Display available options.\n\
   --lower-case				Enable lower case (shifted) PETSCII.\n\
 ";
 	printf("%s", usage_msg);
-	clean_up();
 }
 
 static void exit_with_msg(const char *msg)
