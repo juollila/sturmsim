@@ -35,15 +35,15 @@ typedef struct {
 	bool open;
 } FCB_CTX;
 
-extern void init_kernal(void);
-extern u8 kernal_setmsg(CPU_CTX *cpu);	// 0xff90
-extern u8 kernal_readst(CPU_CTX *cpu);	// 0xffb7
-extern u8 kernal_setlfs(CPU_CTX *cpu);	// 0xffba
-extern u8 kernal_open(CPU_CTX *cpu);	// 0xffc0
-extern u8 kernal_chkout(CPU_CTX *cpu);	// 0xffc9
-extern u8 kernal_clrchn(CPU_CTX *cpu);	// 0xffcc
-extern u8 kernal_chrin(CPU_CTX *cpu, bool lower);	// 0xffcf
-extern u8 kernal_chrout(CPU_CTX *cpu, bool lower);	// 0xffd2
-extern u8 kernal_plot(CPU_CTX *cpu);	// 0xfff0
+void init_kernal(void);
+u8 kernal_setmsg(CPU_CTX *cpu);	// 0xff90
+u8 kernal_readst(CPU_CTX *cpu);	// 0xffb7
+u8 kernal_setlfs(CPU_CTX *cpu);	// 0xffba
+u8 kernal_open(CPU_CTX *cpu);	// 0xffc0
+u8 kernal_chkout(CPU_CTX *cpu);	// 0xffc9
+u8 kernal_clrchn(CPU_CTX *cpu);	// 0xffcc
+u8 kernal_chrin(CPU_CTX *cpu, bool lower);	// 0xffcf
+u8 kernal_chrout(CPU_CTX *cpu, bool lower);	// 0xffd2
+u8 kernal_plot(CPU_CTX *cpu);	// 0xfff0
 
 #endif /* KERNAL_H */

@@ -41,12 +41,11 @@ static u8 io_status = 0;
 
 static u8 lfs_file, lfs_device, lfs_sa;
 
-FCB_CTX fcb[MAX_FILES];
+static FCB_CTX fcb[MAX_FILES];
 
-struct termios term_old, term_new;
+static struct termios term_old, term_new;
 
-
-void disable_echo()
+static void disable_echo()
 {
 	tcgetattr(STDIN_FILENO, &term_old);
 	term_new = term_old;
@@ -54,14 +53,9 @@ void disable_echo()
 	tcsetattr(STDIN_FILENO, TCSANOW, &term_new);
 }
 
-void enable_echo()
+static void enable_echo()
 {
 	tcsetattr(STDIN_FILENO, TCSANOW, &term_old);
-}
-
-void init_kernal(void)
-{
-	for (int i = 0; i < MAX_FILES ; i++) fcb[i].open = false;
 }
 
 static FCB_CTX *find_free_fcb(void)
@@ -78,6 +72,11 @@ static FCB_CTX *find_fcb(int file)
 		if (fcb[i].file == file) return &fcb[i];
 	}
 	return NULL;
+}
+
+void init_kernal(void)
+{
+	for (int i = 0; i < MAX_FILES ; i++) fcb[i].open = false;
 }
 
 u8 kernal_setmsg(CPU_CTX *cpu)

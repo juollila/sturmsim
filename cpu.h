@@ -73,25 +73,10 @@ static const u8 negative_flag = 0x80;
 
 void init_cpu(CPU_CTX *cpu);
 void init_memory(void);
-static u8 fetch_byte(CPU_CTX *cpu);
-static u8 peek_byte(CPU_CTX *cpu);
-static u16 fetch_word(CPU_CTX *cpu);
-static u16 peek_word(CPU_CTX *cpu);
-static void push_byte(CPU_CTX *cpu, u8 i);
-static void push_word(CPU_CTX *cpu, u16 i);
-static u8 pull_byte(CPU_CTX *cpu);
-static u16 pull_word(CPU_CTX *cpu);
 void set_nz_flags(CPU_CTX *cpu, u8 i);
 void set_cmp_flags(CPU_CTX *cpu, u8 i, u8 j);
 u8 adc(CPU_CTX *cpu, u8 i, u8 j);
 u8 sbc(CPU_CTX *cpu, u8 i, u8 j);
-static u8 asl(CPU_CTX *cpu, u8 i);
-static u8 rol(CPU_CTX *cpu, u8 i);
-static u8 lsr(CPU_CTX *cpu, u8 i);
-static u8 ror(CPU_CTX *cpu, u8 i);
-static void bit(CPU_CTX *cpu, u8 i);
-static void brk_inst(CPU_CTX *cpu);
-static void print_registers(CPU_CTX *cpu);
 void execute_instruction(SIM_CTX *sim, CPU_CTX *cpu);
 void execute_program(SIM_CTX *sim, CPU_CTX *cpu);
 

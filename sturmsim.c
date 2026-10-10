@@ -31,7 +31,7 @@
 #include "sturmsim.h"
 #include "kernal.h"
 
-SIM_CTX sim_ctx;
+static SIM_CTX sim_ctx;
 
 static void clean_up(void)
 {
@@ -50,7 +50,7 @@ static void print_usage_msg()
 	clean_up();
 }
 
-static void exit_with_msg(char *msg)
+static void exit_with_msg(const char *msg)
 {
 	fprintf(stderr, "%s\n", msg);
 	clean_up();
@@ -58,7 +58,7 @@ static void exit_with_msg(char *msg)
 }
 
 
-static void parse_parameters(int argc, char *argv[])
+static void parse_parameters(int argc, const char *argv[])
 {
 	const char *execution_address_switch = "--execution-address=";
 	sim_ctx.program_file_name = NULL;
@@ -87,7 +87,7 @@ static void parse_parameters(int argc, char *argv[])
 		exit_with_msg("File name is missing!");
 }
 
-u16 load_program(char *file_name)
+u16 load_program(const char *file_name)
 {
 	int low, high, ch;
 	u32 address;
@@ -120,7 +120,7 @@ u16 load_program(char *file_name)
 
 }
 
-int main(int argc, char *argv[])
+int main(int argc, const char *argv[])
 {
 	u16 load_address;
 	parse_parameters(argc, argv);

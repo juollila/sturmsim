@@ -29,6 +29,22 @@
 #include "kernal.h"
 #include "sturmsim.h"
 
+static u8 fetch_byte(CPU_CTX *cpu);
+static u8 peek_byte(CPU_CTX *cpu);
+static u16 fetch_word(CPU_CTX *cpu);
+static u16 peek_word(CPU_CTX *cpu);
+static void push_byte(CPU_CTX *cpu, u8 i);
+static void push_word(CPU_CTX *cpu, u16 i);
+static u8 pull_byte(CPU_CTX *cpu);
+static u16 pull_word(CPU_CTX *cpu);
+static u8 asl(CPU_CTX *cpu, u8 i);
+static u8 rol(CPU_CTX *cpu, u8 i);
+static u8 lsr(CPU_CTX *cpu, u8 i);
+static u8 ror(CPU_CTX *cpu, u8 i);
+static void bit(CPU_CTX *cpu, u8 i);
+static void brk_inst(CPU_CTX *cpu);
+static void print_registers(CPU_CTX *cpu);
+
 u8 mem[MEM_SIZE];
 
 void init_cpu(CPU_CTX *cpu)
