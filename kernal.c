@@ -123,6 +123,31 @@ u8 kernal_open(CPU_CTX *cpu)
 	return RTS;
 }
 
+u8 kernal_chkin(CPU_CTX *cpu) {
+	u8 file = cpu->xr;
+	FCB_CTX *fcb = find_fcb(file);
+	if (fcb == NULL || fcb->open == false) {
+		fprintf(stderr, "FILE_NOT_OPEN\n");
+		cpu->sr |= carry_flag;
+		cpu->ac = 0x3;
+		return RTS;
+	}
+	if (fcb->device == 0x0) {
+		input_device = 0x0;
+		cpu->sr &= (~carry_flag);
+		return RTS;
+	}
+	if (fcb->device == 0x3) {
+		input_device = 0x3;
+		cpu->sr &= (~carry_flag);
+		return RTS;
+	}
+	fprintf(stderr, "DEVICE_NOT_PRESENT\n");
+	cpu->sr |= carry_flag;
+	cpu->ac = 0x5;
+	return RTS;
+}
+
 u8 kernal_chkout(CPU_CTX *cpu)
 {
 	u8 file = cpu->xr;
@@ -161,12 +186,18 @@ u8 kernal_clrchn(CPU_CTX *cpu)
 
 u8 kernal_chrin(CPU_CTX *cpu, bool lower)
 {
-	u8 c, i;
+	int c;
+	u8 i;
 	u8 len = mem[KBLEN];
 	if (len == 0) {
-		disable_echo();
+		bool terminal_input = isatty(STDIN_FILENO);
+		if (terminal_input) disable_echo();
 		c = getchar();
-		enable_echo();
+		if (terminal_input) enable_echo();
+		if (c == EOF) {
+			cpu->halt = true;
+			return RTS;
+		}
 	} else {
 		c = mem[KEYBOARD_BUFFER];
 		for (i = 0; i < len; i++)
@@ -188,6 +219,11 @@ u8 kernal_chrin(CPU_CTX *cpu, bool lower)
 u8 kernal_chrout(CPU_CTX *cpu, bool lower)
 {
 	u8 i = cpu->ac;
+	/* ignore '\n' */
+	if (i == 0xa) {
+		cpu->sr &= (~carry_flag);
+		return RTS;
+	}
 	if (i == 0xd) i = '\n';
 	/* reverse on */
 	if (i == 0x12) {
@@ -223,6 +259,9 @@ u8 kernal_plot(CPU_CTX *cpu)
 {
 	int x, y;
 	if ((cpu->sr & carry_flag) == carry_flag) {
+		/* return if stdin is not terminal */
+		if (isatty(STDIN_FILENO) == 0)
+			return RTS;
 		disable_echo();
 		printf("\033[6n");
 		fflush(stdout);
@@ -231,6 +270,9 @@ u8 kernal_plot(CPU_CTX *cpu)
 		cpu->yr = (u8) y;
 		enable_echo();
 	} else {
+		/* return if stdout is not terminal */
+		if (isatty(STDOUT_FILENO) == 0)
+			return RTS;
 		printf("\033[%d;%dH", cpu->xr, cpu->yr);
 	}
 	return RTS;
