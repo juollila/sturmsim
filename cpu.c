@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "cpu.h"
 #include "kernal.h"
@@ -60,9 +61,7 @@ void init_cpu(CPU_CTX *cpu)
 
 void init_memory(void)
 {
-	for(int i = 0; i < MEM_SIZE;)
-		mem[i++] = 0x0;
-
+	memset(mem, 0, MEM_SIZE);
 	/* Install default BRK vector (CBINV), C64 specific */
 	mem[0x316] = 0x66;
 	mem[0x317] = 0xfe;
