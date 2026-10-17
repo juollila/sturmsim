@@ -363,6 +363,9 @@ void execute_instruction(SIM_CTX *sim, CPU_CTX *cpu)
 	case 0xffc0:
 		instruction = kernal_open(cpu);
 		break;
+	case 0xffc3:
+		instruction = kernal_close(cpu);
+		break;
 	case 0xffc6:
 		instruction = kernal_chkin(cpu);
 		break;

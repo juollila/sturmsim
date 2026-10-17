@@ -40,6 +40,7 @@ u8 kernal_setmsg(CPU_CTX *cpu);	// 0xff90
 u8 kernal_readst(CPU_CTX *cpu);	// 0xffb7
 u8 kernal_setlfs(CPU_CTX *cpu);	// 0xffba
 u8 kernal_open(CPU_CTX *cpu);	// 0xffc0
+u8 kernal_close(CPU_CTX *cpu);	// 0xffc3
 u8 kernal_chkin(CPU_CTX *cpu);	// 0xffc6
 u8 kernal_chkout(CPU_CTX *cpu);	// 0xffc9
 u8 kernal_clrchn(CPU_CTX *cpu);	// 0xffcc

@@ -118,7 +118,16 @@ u8 kernal_open(CPU_CTX *cpu)
 	new->device = lfs_device;
 	new->sa = lfs_sa;
 	new->open = true;
-	//printf("kernal_open: %d, %d, %d\n", new->file, new->device, new->sa);
+	// printf("kernal_open: %d, %d, %d\n", new->file, new->device, new->sa);
+	cpu->sr &= (~carry_flag);
+	return RTS;
+}
+
+u8 kernal_close(CPU_CTX *cpu)
+{
+	FCB_CTX *fcb = find_fcb(cpu->ac);
+	if (fcb) fcb->open = false;
+	// printf("kernal_close: %d\n", cpu->ac);
 	cpu->sr &= (~carry_flag);
 	return RTS;
 }
