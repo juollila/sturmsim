@@ -35,11 +35,15 @@
 #define KEYBOARD_BUFFER 0x277
 #define KBLEN 0xc6
 
+#undef DEBUG
+
 static u8 input_device = 0;
 static u8 output_device = 3;
 static u8 io_status = 0;
 
 static u8 lfs_file, lfs_device, lfs_sa;
+
+static u8 name[256];
 
 static FCB_CTX fcb[MAX_FILES];
 
@@ -74,6 +78,26 @@ static FCB_CTX *find_fcb(int file)
 	return NULL;
 }
 
+static u8 ascii2pet(u8 i, bool lower)
+{
+	if (lower == true && i >= 0x41 && i <= 0x5a) i+= 0x80;
+	if (i >= 0x61 && i <= 0x7a) i -= 0x20;
+	return i;
+}
+
+static u8 pet2ascii(u8 i, bool lower)
+{
+	if (lower == true) {
+		if (i>=0x41 && i<=0x5a)
+			i += 0x20;
+		else if (i>=0x61 && i<=0x7a)
+			i -= 0x20;
+		else if (i>=0xc1 && i<=0xda)
+			i &= 0x7f;
+	}
+	return i;
+}
+
 void init_kernal(void)
 {
 	for (int i = 0; i < MAX_FILES ; i++) fcb[i].open = false;
@@ -82,6 +106,9 @@ void init_kernal(void)
 u8 kernal_setmsg(CPU_CTX *cpu)
 {
 	cpu->sr &= (~carry_flag);
+#ifdef DEBUG
+	printf("kernal_setmsg\n");
+#endif
 	return RTS;
 }
 
@@ -89,6 +116,9 @@ u8 kernal_setmsg(CPU_CTX *cpu)
 u8 kernal_readst(CPU_CTX *cpu)
 {
 	cpu->ac = io_status;
+#ifdef DEBUG
+	printf("kernal_readst\n");
+#endif
 	return RTS;
 }
 
@@ -98,19 +128,40 @@ u8 kernal_setlfs(CPU_CTX *cpu)
 	lfs_device = cpu->xr;
 	lfs_sa = cpu->yr;
 	cpu->sr &= (~carry_flag);
+#ifdef DEBUG
+	printf("kernal_setlfs: %d %d %d\n", lfs_file, lfs_device, lfs_sa); 
+#endif
+	return RTS;
+}
+
+u8 kernal_setnam(CPU_CTX *cpu, bool lower)
+{
+	u8 i;
+	u16 address = cpu->yr * 0x100 + cpu->xr;
+	u8 length = cpu->ac;
+	cpu->sr &= (~carry_flag);
+	if (length == 0)
+		return RTS;
+	for(i = 0; i < length; i ++) {
+		name[i] = pet2ascii(mem[address + i], lower); 
+	}
+	name[i] = 0;
+#ifdef DEBUG
+	printf("kernal_setname: %s\n", name);
+#endif
 	return RTS;
 }
 
 u8 kernal_open(CPU_CTX *cpu)
 {
 	if (find_fcb(lfs_file)) {
-		fprintf(stderr, "FILE OPEN ERROR\n");
+		fprintf(stderr, "\nFILE OPEN ERROR\n");
 		cpu->sr |= carry_flag;
 		return RTS;
 	}
 	FCB_CTX *new = find_free_fcb();
 	if (new == NULL) {
-		fprintf(stderr, "TOO MANY FILES ERROR\n");
+		fprintf(stderr, "\nTOO MANY FILES ERROR\n");
 		cpu->sr |= carry_flag;
 		return RTS;
 	}
@@ -118,7 +169,9 @@ u8 kernal_open(CPU_CTX *cpu)
 	new->device = lfs_device;
 	new->sa = lfs_sa;
 	new->open = true;
-	// printf("kernal_open: %d, %d, %d\n", new->file, new->device, new->sa);
+#ifdef DEBUG
+	printf("kernal_open: %d, %d, %d\n", new->file, new->device, new->sa);
+#endif
 	cpu->sr &= (~carry_flag);
 	return RTS;
 }
@@ -127,7 +180,9 @@ u8 kernal_close(CPU_CTX *cpu)
 {
 	FCB_CTX *fcb = find_fcb(cpu->ac);
 	if (fcb) fcb->open = false;
-	// printf("kernal_close: %d\n", cpu->ac);
+#ifdef DEBUG
+	printf("kernal_close: %d\n", cpu->ac);
+#endif
 	cpu->sr &= (~carry_flag);
 	return RTS;
 }
@@ -136,7 +191,7 @@ u8 kernal_chkin(CPU_CTX *cpu) {
 	u8 file = cpu->xr;
 	FCB_CTX *fcb = find_fcb(file);
 	if (fcb == NULL || fcb->open == false) {
-		fprintf(stderr, "FILE_NOT_OPEN\n");
+		fprintf(stderr, "\nFILE_NOT_OPEN\n");
 		cpu->sr |= carry_flag;
 		cpu->ac = 0x3;
 		return RTS;
@@ -151,7 +206,7 @@ u8 kernal_chkin(CPU_CTX *cpu) {
 		cpu->sr &= (~carry_flag);
 		return RTS;
 	}
-	fprintf(stderr, "DEVICE_NOT_PRESENT\n");
+	fprintf(stderr, "\nDEVICE_NOT_PRESENT\n");
 	cpu->sr |= carry_flag;
 	cpu->ac = 0x5;
 	return RTS;
@@ -160,16 +215,15 @@ u8 kernal_chkin(CPU_CTX *cpu) {
 u8 kernal_chkout(CPU_CTX *cpu)
 {
 	u8 file = cpu->xr;
-	//printf("kernal_chkout: %d\n", file);
 	FCB_CTX *fcb = find_fcb(file);
 	if (fcb == NULL || fcb->open == false) {
-		fprintf(stderr, "FILE_NOT_OPEN\n");
+		fprintf(stderr, "\nFILE_NOT_OPEN\n");
 		cpu->sr |= carry_flag;
 		cpu->ac = 0x3;
 		return RTS;
 	}
 	if (fcb->device == 0x0) {
-		fprintf(stderr, "NOT_OUTPUT_FILE\n");
+		fprintf(stderr, "\nNOT_OUTPUT_FILE\n");
 		cpu->sr |= carry_flag;
 		cpu->ac = 0x0;
 		return RTS;
@@ -179,7 +233,7 @@ u8 kernal_chkout(CPU_CTX *cpu)
 		cpu->sr &= (~carry_flag);
 		return RTS;
 	}
-	fprintf(stderr, "DEVICE_NOT_PRESENT\n");
+	fprintf(stderr, "\nDEVICE_NOT_PRESENT\n");
 	cpu->sr |= carry_flag;
 	cpu->ac = 0x5;
 	return RTS;
@@ -190,6 +244,9 @@ u8 kernal_clrchn(CPU_CTX *cpu)
 	input_device = 0;
 	output_device = 3;
 	cpu->sr &= (~carry_flag);
+#ifdef DEBUG
+	printf("kernal_clrchn\n");
+#endif
 	return RTS;
 }
 
@@ -213,8 +270,7 @@ u8 kernal_chrin(CPU_CTX *cpu, bool lower)
 			mem[KEYBOARD_BUFFER + i] = mem[KEYBOARD_BUFFER + i + 1];
 		mem[KBLEN] = len - 1;
 	}
-	if (lower == false && c >= 0x61 && c <= 0x7a)
-		c -= 0x20;
+	c = ascii2pet(c, lower);
 	if (c >= ' ')
 		putchar(c);
 	if (c == '\n')
@@ -249,17 +305,55 @@ u8 kernal_chrout(CPU_CTX *cpu, bool lower)
 	/* shift + space */
 	if (i == 0xa0)
 		i = 0x20;
-	if (lower == false && i >= 0x60) i = '.';
-	if (lower == true) {
-		if (i>=0x41 && i<=0x5a)
-			i += 0x20;
-		else if (i>=0x61 && i<=0x7a)
-			i -= 0x20;
-		else if (i>=0xc1 && i<=0xda)
-			i &= 0x7f;
-	}
-	if (lower == true && i >= 0x80) i = '.';
+	i = pet2ascii(i, lower);
+	if (i >= 0x7f) i = '.';
+	if (i <= 0x20 & i!='\n') i = '.';
 	putchar(i);
+	cpu->sr &= (~carry_flag);
+	return RTS;
+}
+
+u8 kernal_load(CPU_CTX *cpu)
+{
+	u16 address;
+	int ch, low, high;
+
+	if (cpu->ac != 0) {
+		fprintf(stderr, "\nTODO: VERIFY\n");
+		cpu->sr |= carry_flag;
+		return RTS;
+	}
+	if (lfs_sa == 0) {
+		fprintf(stderr, "\nTODO: IGNORE HEADER\n");
+		cpu->sr |= carry_flag;
+		return RTS;
+	}
+
+	FILE *program = fopen((const char *)&name[0], "rb");
+	if (program == NULL) {
+		fprintf(stderr, "\nFILE_NOT_FOUND_ERROR\n");
+		cpu->sr |= carry_flag;
+		return RTS;
+	}
+
+	low = fgetc(program);
+	high = fgetc(program);
+
+	if (low != EOF && high != EOF) {
+		address = (high * 0x100) + low;
+		while (( ch = fgetc(program)) != EOF) {
+			mem[address++] = (u8) ch;
+		}
+	} else {
+		fclose(program);
+		fprintf(stderr, "\nLOAD_ERROR\n");
+		cpu->sr |= carry_flag;
+		return RTS;
+	}
+	fclose(program);
+#ifdef DEBUG
+	printf("kernal_load\n");
+#endif
 	cpu->sr &= (~carry_flag);
 	return RTS;
 }

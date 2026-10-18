@@ -359,6 +359,9 @@ void execute_instruction(SIM_CTX *sim, CPU_CTX *cpu)
 	case 0xffba:
 		instruction = kernal_setlfs(cpu);
 		break;
+	case 0xffbd:
+		instruction = kernal_setnam(cpu, sim->lower_case);
+		break;
 	case 0xffc0:
 		instruction = kernal_open(cpu);
 		break;
@@ -379,6 +382,9 @@ void execute_instruction(SIM_CTX *sim, CPU_CTX *cpu)
 		break;
 	case 0xffd2:
 		instruction = kernal_chrout(cpu, sim->lower_case);
+		break;
+	case 0xffd5:
+		instruction = kernal_load(cpu);
 		break;
 	case 0xfff0:
 		instruction = kernal_plot(cpu);
