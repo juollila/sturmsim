@@ -32,7 +32,7 @@
 #define RTS 0x60
 #define MAX_FILES 10
 
-#define KEYBOARD_BUFFER 0x277
+#define MEM_KEYBOARD_BUFFER 0x277
 #define KBLEN 0xc6
 
 #undef DEBUG
@@ -40,6 +40,9 @@
 static u8 input_device = 0;
 static u8 output_device = 3;
 static u8 io_status = 0;
+
+static u8 kernal_keyboard_buffer[256];
+static u8 kernal_keyboard_buffer_len= 0;
 
 static u8 lfs_file, lfs_device, lfs_sa;
 
@@ -80,7 +83,10 @@ static FCB_CTX *find_fcb(int file)
 
 static u8 ascii2pet(u8 i, bool lower)
 {
+	// ascii upper case -> petscii upper case (petscii lower case mode)
 	if (lower == true && i >= 0x41 && i <= 0x5a) i+= 0x80;
+	// ascii lower case -> petscii lower case (petscii lower case mode)
+	// ascii lower case -> petscii upper case (petscii upper/gfx case mode)
 	if (i >= 0x61 && i <= 0x7a) i -= 0x20;
 	return i;
 }
@@ -88,15 +94,27 @@ static u8 ascii2pet(u8 i, bool lower)
 static u8 pet2ascii(u8 i, bool lower)
 {
 	if (lower == true) {
+		// petscii lower case -> ascii lower case
 		if (i>=0x41 && i<=0x5a)
 			i += 0x20;
+		// petscii upper case -> ascii lower case
 		else if (i>=0x61 && i<=0x7a)
 			i -= 0x20;
+		// petscii upper case -> ascii upper case
 		else if (i>=0xc1 && i<=0xda)
 			i &= 0x7f;
 	}
 	return i;
 }
+
+static bool is_cr_in_kernal_keyboard_buffer()
+{
+	int i;
+	for (i = 0; i < kernal_keyboard_buffer_len; i++) {
+		if (kernal_keyboard_buffer[i] == 0xd) return true;
+	}
+	return false;
+}	
 
 void init_kernal(void)
 {
@@ -261,7 +279,16 @@ u8 kernal_chrin(CPU_CTX *cpu, bool lower)
 	int c;
 	u8 i;
 	u8 len = mem[KBLEN];
-	if (len == 0) {
+	// copy keyboard buffer from mem to kernal keyboard buffer
+	if (len > 0) {
+		for(i = 0; i < len; i++) {
+			kernal_keyboard_buffer[kernal_keyboard_buffer_len + i] = mem[MEM_KEYBOARD_BUFFER + i];
+		}
+		kernal_keyboard_buffer_len += len;
+		len = 0;
+	}
+	// fill kernal keyboard buffer until return pressed
+	while (!is_cr_in_kernal_keyboard_buffer()) {
 		bool terminal_input = isatty(STDIN_FILENO);
 		if (terminal_input) disable_echo();
 		c = getchar();
@@ -270,24 +297,27 @@ u8 kernal_chrin(CPU_CTX *cpu, bool lower)
 			cpu->halt = true;
 			return RTS;
 		}
-	} else {
-		c = mem[KEYBOARD_BUFFER];
-		for (i = 0; i < len; i++)
-			mem[KEYBOARD_BUFFER + i] = mem[KEYBOARD_BUFFER + i + 1];
-		mem[KBLEN] = len - 1;
+		if (c == '\n') c = '\r';
+		if (c == 0x7f || c=='\b') {
+			printf("\b \b");
+			fflush(stdout);
+			if (kernal_keyboard_buffer_len > 0) kernal_keyboard_buffer_len -= 1;
+			continue;
+		}
+		// write character to kernal keyboard buffer
+		kernal_keyboard_buffer[kernal_keyboard_buffer_len++] = ascii2pet(c, lower);
+		if (kernal_keyboard_buffer_len > 255) kernal_keyboard_buffer_len = 255;
+		// print character if it is printable
+		if (c >= ' ' && c < 0x7f) putchar(c);
 	}
-	/* while (c == 0x7f || c == '\b' ) {
- 		printf("\b \b");
-		fflush(stdout);
-		disable_echo();
-		c = getchar();
-		enable_echo();
-	} */
-	c = ascii2pet(c, lower);
-	if (c >= ' ')
-		putchar(c);
-	if (c == '\n')
-		c = '\r';
+	// get the first char from the kernal keyboard buffer
+	c = kernal_keyboard_buffer[0];
+	// move the rest of chars in buffer
+	for (i = 0; i < kernal_keyboard_buffer_len; i++) {
+		kernal_keyboard_buffer[i] = kernal_keyboard_buffer[i + 1];
+	}
+	kernal_keyboard_buffer_len -= 1;
+	// return char
 	cpu->ac = c;
 	cpu->sr &= (~carry_flag);
 	return RTS;
