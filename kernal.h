@@ -48,6 +48,7 @@ u8 kernal_clrchn(CPU_CTX *cpu);	// 0xffcc
 u8 kernal_chrin(CPU_CTX *cpu, bool lower);	// 0xffcf
 u8 kernal_chrout(CPU_CTX *cpu, bool lower);	// 0xffd2
 u8 kernal_load(CPU_CTX *cpu);	// 0xffd5
+u8 kernal_save(CPU_CTX *cpu);	// 0xffd8
 u8 kernal_plot(CPU_CTX *cpu);	// 0xfff0
 
 #endif /* KERNAL_H */

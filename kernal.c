@@ -190,6 +190,9 @@ u8 kernal_close(CPU_CTX *cpu)
 u8 kernal_chkin(CPU_CTX *cpu) {
 	u8 file = cpu->xr;
 	FCB_CTX *fcb = find_fcb(file);
+#ifdef DEBUG
+	printf("kernal_checkin: %d\n", file);
+#endif
 	if (fcb == NULL || fcb->open == false) {
 		fprintf(stderr, "\nFILE_NOT_OPEN\n");
 		cpu->sr |= carry_flag;
@@ -215,6 +218,9 @@ u8 kernal_chkin(CPU_CTX *cpu) {
 u8 kernal_chkout(CPU_CTX *cpu)
 {
 	u8 file = cpu->xr;
+#ifdef DEBUG
+	printf("kernal_checkout: %d\n", file);
+#endif
 	FCB_CTX *fcb = find_fcb(file);
 	if (fcb == NULL || fcb->open == false) {
 		fprintf(stderr, "\nFILE_NOT_OPEN\n");
@@ -270,6 +276,13 @@ u8 kernal_chrin(CPU_CTX *cpu, bool lower)
 			mem[KEYBOARD_BUFFER + i] = mem[KEYBOARD_BUFFER + i + 1];
 		mem[KBLEN] = len - 1;
 	}
+	/* while (c == 0x7f || c == '\b' ) {
+ 		printf("\b \b");
+		fflush(stdout);
+		disable_echo();
+		c = getchar();
+		enable_echo();
+	} */
 	c = ascii2pet(c, lower);
 	if (c >= ' ')
 		putchar(c);
@@ -353,6 +366,58 @@ u8 kernal_load(CPU_CTX *cpu)
 	fclose(program);
 #ifdef DEBUG
 	printf("kernal_load\n");
+#endif
+	cpu->sr &= (~carry_flag);
+	return RTS;
+}
+
+u8 kernal_save(CPU_CTX *cpu)
+{
+	u16 start_address, end_address;
+	int i, res1, res2;
+
+	if (lfs_device == 0 || lfs_device == 2 || lfs_device == 3) {
+		fprintf(stderr, "\nILLEGAL_DEVICE_NUMBER\n");
+		cpu->sr |= carry_flag;
+		return RTS;
+	}
+	if (lfs_device == 1) {
+		fprintf(stderr, "\nTODO: SAVE TO DATASETTE\n");
+		cpu->sr |= carry_flag;
+		return RTS;
+	}
+
+	FILE *program = fopen((const char *)&name[0], "wb");
+	if (program == NULL) {
+		fprintf(stderr, "\nCANNOT_OPEN_FILE_ERROR\n");
+		cpu->sr |= carry_flag;
+		return RTS;
+	}
+	start_address = (mem[cpu->ac + 1] * 0x100) + mem[cpu->ac];
+	end_address = (cpu->yr * 0x100) + cpu->xr;
+
+	res1 = fputc(start_address & 0xff, program);
+	res2 = fputc(start_address >> 8, program);
+	if (res1 != EOF && res2 != EOF) {
+		for (i = start_address; i < end_address ; i++) {
+			res1 = fputc(mem[i], program);
+			if (res1 == EOF) {
+				fclose(program);
+				fprintf(stderr, "\nSAVE_ERROR\n");
+				cpu->sr |= carry_flag;
+				return RTS;
+			}
+		}
+
+	} else {
+		fclose(program);
+		fprintf(stderr, "\nSAVE_ERROR\n");
+		cpu->sr |= carry_flag;
+		return RTS;
+	}
+	fclose(program);
+#ifdef DEBUG
+	printf("kernal_save\n");
 #endif
 	cpu->sr &= (~carry_flag);
 	return RTS;

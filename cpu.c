@@ -386,6 +386,9 @@ void execute_instruction(SIM_CTX *sim, CPU_CTX *cpu)
 	case 0xffd5:
 		instruction = kernal_load(cpu);
 		break;
+	case 0xffd8:
+		instruction = kernal_save(cpu);
+		break;
 	case 0xfff0:
 		instruction = kernal_plot(cpu);
 		break;
